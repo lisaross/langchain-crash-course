@@ -1,5 +1,6 @@
 # Example Source: https://python.langchain.com/v0.2/docs/integrations/memory/google_firestore/
 
+import os
 from dotenv import load_dotenv
 from google.cloud import firestore
 from langchain_google_firestore import FirestoreChatMessageHistory
@@ -23,8 +24,8 @@ Steps to replicate this example:
 load_dotenv()
 
 # Setup Firebase Firestore
-PROJECT_ID = "langchain-demo-abf48"
-SESSION_ID = "user_session_new"  # This could be a username or a unique ID
+PROJECT_ID = "mkb-langchain-crash-course"  # Your Firebase project ID
+SESSION_ID = "lisa_ross"  # This could be a username or a unique ID
 COLLECTION_NAME = "chat_history"
 
 # Initialize Firestore Client
