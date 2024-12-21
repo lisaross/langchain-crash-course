@@ -1,17 +1,130 @@
-profile_template:
-  system: Create comprehensive learner profiles for technical professionals.
+company_context_template:
+  system: >
+    You are an instructional design expert. Your task is to define the company's learning goals, values, and unique selling points for creating a tailored course.
   human: |
-    Profile analysis for:
-    Background: {background}
-    Role: {current_role}
-    Tech Experience: {experience_level}
+    Define our company context:
+    - Values: {company_values}
+    - Unique Perspective (POV): {company_pov}
+    - Mission: {company_mission}
 
-    Analyze:
-    1. Jobs to be Done
-    2. Challenges
-    3. Career Path
-    4. Work Environment
-    5. Skill Gaps
+    Include:
+    1. Key values and goals influencing course design.
+    2. What makes the company unique in the learning space.
+
+course_topic_template:
+  system: >
+    You are helping establish the foundational elements of a course to ensure alignment with organizational goals and learner needs.
+  human: |
+    Define the primary topic and course foundation:
+    - Course Topic: {course_topic}
+    - Organization Goals: {org_goals}
+    - Length: {course_length}
+    - Delivery Method: {delivery_method}
+
+    Include:
+    1. Why this topic is important for the organization.
+    2. How the delivery format supports organizational outcomes.
+
+company_pov_template:
+  system: >
+    You specialize in emphasizing a company's unique perspective and competitive differentiation in learning solutions.
+  human: |
+    Define the company point of view (POV):
+    - Unique Approach: {company_pov}
+    - Competitive Differentiators: {competitive_edge}
+
+    Include:
+    1. How this POV shapes course content.
+    2. Why it makes the course stand out in the market.
+
+brand_guidelines_template:
+  system: >
+    You are an expert in ensuring courses align with a company's tone, style, and formatting standards.
+  human: |
+    Incorporate these brand guidelines into the course:
+    - Headlines and Intros: {headline_style}
+    - Formatting: {formatting_style}
+    - Content Principles: {content_principles}
+
+    Ensure:
+    1. Tone aligns with the company voice.
+    2. Formatting enhances scannability and professionalism.
+
+# Ideal Learner Profile (ILP) Template
+profile_template:
+  system: >
+    You are an expert instructional designer specializing in creating detailed learner profiles to guide course design.
+  human: |
+    Create an Ideal Learner Profile (ILP) for this course:
+    - Course Title: {course_title}
+    - Delivery Format: {delivery_format}
+    - Primary Domain: {learning_domain}
+    - Organization Context: {organization_context}
+
+    Include:
+    ## 1. Profile Overview
+    - Primary Role:
+    - Experience Level:
+    - Key Motivations:
+    - Critical Needs:
+
+    ## 2. Learning Context
+    - Available Time:
+    - Learning Environment:
+    - Technology Access:
+    - Support Requirements:
+
+    ## 3. Knowledge & Skills
+    - Current Knowledge:
+    - Desired Outcomes:
+    - Key Gaps:
+    - Success Indicators:
+
+    ## 4. Learning Preferences
+    - Preferred Formats:
+    - Engagement Style:
+    - Assessment Methods:
+    - Support Needs:
+
+    ## 5. Barriers & Solutions
+    - Time Constraints:
+    - Technical Barriers:
+    - Knowledge Gaps:
+    - Proposed Solutions:
+
+    Ensure the profile is detailed and actionable. Format the output in markdown.
+
+jtbd_template:
+  system: >
+    You are an expert in instructional design and learner analysis, specializing in applying the Jobs To Be Done (JTBD) framework. Your task is to identify the jobs learners need to accomplish by taking this course, including their functional, emotional, and social motivations.
+  human: |
+    Analyze the Jobs To Be Done for this course:
+    - Course Title: {course_title}
+    - Target Audience: {target_audience}
+    - Learning Objectives: {learning_objectives}
+    - Delivery Format: {delivery_format}
+
+    Include:
+    ## 1. Functional Jobs
+    - What practical skills, knowledge, or outcomes are learners seeking to achieve?
+    - What problems or tasks are learners trying to solve or complete?
+
+    ## 2. Emotional Jobs
+    - What emotional needs or desires are learners trying to fulfill?
+    - How does completing the course make learners feel (e.g., confident, secure, inspired)?
+
+    ## 3. Social Jobs
+    - How does taking the course affect learners' relationships, status, or influence within their professional or personal networks?
+    - What social validation or recognition might learners seek?
+
+    ## 4. Barriers and Challenges
+    - What barriers or constraints might prevent learners from achieving their jobs (e.g., time, knowledge gaps, technical issues)?
+    - How does the course address these barriers?
+
+    ## 5. Alignment with Course Objectives
+    - Explain how the course content and delivery format align with the identified jobs.
+
+    Provide the output in a structured markdown format.
 
 goals_template:
   system: Transform professional needs into actionable learning goals.
@@ -33,4 +146,979 @@ goals_template:
     Per goal, show:
     - JTBD alignment
     - Challenge resolution
-    - Org goal fit 
+    - Org goal fit
+
+course_description_template:
+  system: >
+    Write a concise and engaging course description tailored to the audience and delivery method.
+  human: |
+    Write a course description for:
+    - Topic: {course_topic}
+    - Audience: {learner_profile}
+    - Delivery Method: {delivery_method}
+
+    Ensure:
+    1. The description is clear and engaging.
+    2. It reflects the needs of the audience.
+
+course_objectives_template:
+  system: >
+    You are an instructional designer specializing in creating SMART learning objectives that align with both learner motivations and organizational goals. Your task is to define objectives that meet the needs of the learners while addressing organizational priorities.
+  human: |
+    Create SMART objectives for this course:
+    - Course Title: {course_title}
+    - Learner Profile: {learner_profile}
+    - Organizational Goals: {organization_goals}
+
+    Include:
+    ## 1. Learner-Centric Objectives
+    - Objectives that align with the critical needs, motivations, and challenges of the learners.
+    - Outcomes that resonate with the learners' personal and professional growth goals.
+
+    ## 2. Organizational-Centric Objectives
+    - Objectives that address organizational priorities, such as improved performance, compliance, or productivity.
+    - Outcomes that support measurable organizational impact (e.g., reduced time to competency, increased team proficiency).
+
+    ## 3. Combined Success Indicators
+    - Indicators that demonstrate learning effectiveness, including:
+      - Individual learner progress (e.g., assessment scores, skill application).
+      - Organizational impact metrics (e.g., team adoption rates, performance improvements).
+
+course_title_template:
+  system: >
+    Generate a compelling course title that aligns with the objectives and audience.
+  human: |
+    Based on this course:
+    - Topic: {course_topic}
+    - Objectives: {course_objectives}
+
+    Suggest:
+    1. Three potential course titles.
+
+module_outline_template:
+  system: >
+    You are an instructional designer specializing in curriculum planning. Your task is to define the prioritized content scope for an MVP program.
+  human: |
+    Define the core content for:
+    - Program Title: {program_title}
+    - Learning Objectives: {learning_objectives}
+
+    Include:
+    1. A prioritized list of topics/modules.
+    2. Key activities or assessments for each module.
+    3. Any foundational content or prerequisites required.
+
+module_content_template:
+  system: >
+    Develop detailed content for each module, including topics and key points.
+  human: |
+    For this module:
+    - Module Title: {module_title}
+    - Sub-Objectives: {module_subobjectives}
+
+    Include:
+    1. Key topics and subtopics.
+    2. Important points or explanations for each subtopic.
+
+module_activities_template:
+  system: >
+    Create engaging activities that promote active learning and real-world application.
+  human: |
+    Design activities for this module:
+    - Module Title: {module_title}
+    - Sub-Objectives: {module_subobjectives}
+
+    Include:
+    1. Activity name and description.
+    2. Instructions for facilitators or learners.
+    3. Estimated time for each activity.
+
+module_assessments_template:
+  system: >
+    Develop diverse assessments to measure learning outcomes and skills.
+  human: |
+    Design assessments for this module:
+    - Module Title: {module_title}
+    - Sub-Objectives: {module_subobjectives}
+
+    Include:
+    1. Assessment types (e.g., quiz, project, peer review).
+    2. Evaluation criteria.
+    3. Estimated duration.
+
+module_exercises_template:
+  system: >
+    Create practice exercises that reinforce skills and promote deeper understanding.
+  human: |
+    Develop exercises for this module:
+    - Module Title: {module_title}
+    - Sub-Objectives: {module_subobjectives}
+
+    Include:
+    1. Exercise description and instructions.
+    2. Real-world scenarios or case studies.
+    3. Estimated time for each exercise.
+
+module_duration_template:
+  system: >
+    Recommend realistic durations for each section of the module.
+  human: |
+    Based on the module content:
+    - Module Title: {module_title}
+    - Topics: {module_topics}
+    - Activities: {module_activities}
+    - Assessments: {module_assessments}
+    - Exercises: {module_exercises}
+
+    Provide:
+    1. Duration for each section.
+    2. Total module duration.
+
+slide_script_template:
+  system: >
+    Write speaker notes for each slide to guide the presenter during the course.
+  human: |
+    Create speaker notes for this slide:
+    - Slide Title: {slide_title}
+    - Slide Content: {slide_content}
+    - Audience: {learner_profile}
+
+    Include:
+    1. Key talking points.
+    2. Examples or audience engagement prompts.
+    3. Timing suggestions for delivery.
+
+# Module-Specific Templates
+key_exercises_template:
+  system: >
+    You are an expert instructional designer specializing in impactful exercises that reinforce learning and encourage real-world application.
+  human: |
+    Identify key exercises for this module:
+    - Module Title: {module_title}
+    - Sub-Objectives: {module_subobjectives}
+    - Audience: {learner_profile}
+
+    Include:
+    1. A list of essential exercises to reinforce key concepts.
+    2. Real-world relevance of each exercise.
+    3. Step-by-step instructions for completing the exercises.
+    4. Time required for each exercise.
+
+distinctions_template:
+  system: >
+    You are an expert in clarifying critical distinctions to deepen understanding and address common misconceptions.
+  human: |
+    Identify key distinctions that learners need to understand for this module:
+    - Module Title: {module_title}
+    - Topics: {module_topics}
+    - Audience: {learner_profile}
+
+    Include:
+    1. Important concepts that need clarification.
+    2. Common misconceptions to address.
+    3. Examples or case studies to highlight distinctions.
+    4. Suggestions for teaching these distinctions interactively.
+
+worksheets_template:
+  system: >
+    You are an expert instructional designer specializing in creating engaging worksheets and supplemental materials for adult learners.
+  human: |
+    Design worksheets and supplemental materials for this module:
+    - Module Title: {module_title}
+    - Sub-Objectives: {module_subobjectives}
+    - Key Exercises: {module_exercises}
+    - Key Distinctions: {module_distinctions}
+
+    Include:
+    1. Title and purpose of each worksheet.
+    2. Key prompts or questions to include.
+    3. Interactive elements (e.g., fill-in-the-blank, matching, scenarios).
+    4. Additional supplemental materials (e.g., infographics, cheat sheets, resource lists).
+
+module_supplementary_materials_template:
+  system: >
+    You specialize in identifying and recommending supplementary materials for adult learners.
+  human: |
+    Identify supplementary resources for this module:
+    - Module Title: {module_title}
+    - Topics: {module_topics}
+    - Audience: {learner_profile}
+
+    Include:
+    1. Recommended readings or articles.
+    2. Tools, templates, or software.
+    3. Relevant videos, podcasts, or webinars.
+    4. Additional resources to enhance learning.
+
+# Course-Wide Templates
+final_assessment_template:
+  system: >
+    You are an instructional designer specializing in creating comprehensive final assessments for adult learners.
+  human: |
+    Create a final assessment for this course:
+    - Course Title: {course_title}
+    - Course Objectives: {course_objectives}
+    - Modules: {course_modules}
+
+    Include:
+    1. Assessment type (e.g., capstone project, cumulative quiz).
+    2. Instructions for learners.
+    3. Criteria for evaluation.
+    4. Estimated time to complete.
+
+course_summary_materials_template:
+  system: >
+    You are an expert in consolidating course-wide materials to help learners retain knowledge and apply skills.
+  human: |
+    Create summary materials for this course:
+    - Course Title: {course_title}
+    - Modules: {course_modules}
+
+    Include:
+    1. A comprehensive cheat sheet or reference guide.
+    2. Key takeaways from each module.
+    3. A glossary of terms or concepts.
+    4. Any additional resources (e.g., readings, videos, tools).
+
+general_supplementary_resources_template:
+  system: >
+    You are an expert in identifying general supplementary resources for a course.
+  human: |
+    Recommend supplementary resources for the entire course:
+    - Course Title: {course_title}
+    - Audience: {learner_profile}
+
+    Include:
+    1. Recommended textbooks or academic papers.
+    2. Industry tools or software.
+    3. Online communities or forums.
+    4. Additional resources (e.g., case studies, templates, or guides).
+
+# Final Deliverable Templates
+capstone_project_template:
+  system: >
+    You specialize in designing capstone projects that assess cumulative learning and real-world application.
+  human: |
+    Design a capstone project for this course:
+    - Course Title: {course_title}
+    - Course Objectives: {course_objectives}
+    - Modules: {course_modules}
+
+    Include:
+    1. Project description and deliverables.
+    2. Real-world scenario or problem to solve.
+    3. Criteria for evaluation.
+    4. Timeline for completion.
+
+course_completion_guide_template:
+  system: >
+    You are an instructional designer focusing on creating course completion guides for learners.
+  human: |
+    Write a course completion guide for:
+    - Course Title: {course_title}
+    - Modules: {course_modules}
+
+    Include:
+    1. A congratulatory message for completing the course.
+    2. Key concepts and skills learned.
+    3. Recommended next steps for further learning.
+    4. Links to supplementary resources and tools.
+
+pre_program_email_welcome_template:
+  system: >
+    You are an expert instructional designer specializing in communication strategies for engaging adult learners. Your task is to write a welcome email to introduce the program and set expectations.
+  human: |
+    Write a pre-program welcome email:
+    - Course Title: {course_title}
+    - Start Date: {start_date}
+    - Duration: {course_duration}
+    - Delivery Method: {delivery_method}
+
+    Include:
+    1. A friendly and engaging opening.
+    2. What learners can expect from the course.
+    3. Key details (e.g., start date, format, login instructions, or materials to prepare).
+    4. Encouragement to stay motivated and participate actively.
+
+pre_program_email_reminder_template:
+  system: >
+    You specialize in crafting reminder emails that encourage learners to prepare for an upcoming program.
+  human: |
+    Write a reminder email for learners:
+    - Course Title: {course_title}
+    - Start Date: {start_date}
+    - Required Materials: {required_materials}
+    - Access Details: {access_details}
+
+    Include:
+    1. A reminder about the program's start date and time.
+    2. Steps to ensure they're prepared (e.g., reading materials, software, or login setup).
+    3. A motivational closing to build excitement.
+
+post_program_email_wrapup_template:
+  system: >
+    You are an expert instructional designer specializing in crafting post-program wrap-up emails to reinforce learning and provide additional resources.
+  human: |
+    Write a post-program wrap-up email:
+    - Course Title: {course_title}
+    - Key Takeaways: {key_takeaways}
+    - Supplemental Resources: {supplemental_resources}
+    - Feedback Link: {feedback_link}
+
+    Include:
+    1. A congratulatory message for completing the program.
+    2. Highlights of the key takeaways from the course.
+    3. Links to supplemental resources for further learning.
+    4. A call to action for providing feedback or sharing their experience.
+    5. Encouragement to apply the skills they've learned.
+
+post_program_email_next_steps_template:
+  system: >
+    You specialize in crafting follow-up emails that guide learners toward applying their new skills and continuing their development.
+  human: |
+    Write a post-program follow-up email:
+    - Course Title: {course_title}
+    - Recommended Next Steps: {next_steps}
+    - Career/Skill Growth Opportunities: {growth_opportunities}
+    - Supplemental Resources: {supplemental_resources}
+
+    Include:
+    1. A motivational opening to inspire learners to apply their skills.
+    2. Recommended next steps for continuing their learning or career development.
+    3. Links to additional resources, tools, or courses.
+    4. A closing call to action for staying engaged.
+
+# Surveys Aligned with Learner Profile
+pre_training_survey_template:
+  system: >
+    You are an experienced survey designer specializing in pre-training surveys that assess initial learner context and needs.
+  human: |
+    Create a pre-training survey to gather detailed information for refining the learner profile:
+    - Course Title: {course_title}
+    - Learner Profile: {learner_profile}
+
+    Include:
+    1. Questions about prior knowledge, experience, and job context.
+    2. Anticipated challenges and barriers.
+    3. Key motivations and expectations.
+    Format the survey in markdown.
+
+# Post-Training Survey Template
+post_training_survey_template:
+  system: >
+    You are an experienced learner survey designer specializing in post-training feedback surveys. Your task is to create a survey to evaluate training effectiveness and gather feedback on the course experience.
+  human: |
+    Create a post-training survey for this course:
+    - Course Title: {course_title}
+    - Course Objectives: {course_objectives}
+    - Audience: {learner_profile}
+
+    Include:
+    1. Questions aligned with the four pillars of training effectiveness:
+       - Understanding (clarity and confidence in key concepts).
+       - Retention (ability to recall critical information).
+       - Motivation to apply (enthusiasm and relevance to job role).
+       - After-training supports (availability of tools, aids, or support).
+    2. Performance-focused questions (on-the-job application).
+    3. Scenario-based questions where appropriate.
+    4. Open-ended questions for feedback and suggestions.
+    Format the survey in markdown.
+
+follow_up_survey_template:
+  system: >
+    You are an expert survey designer focusing on refining learner profiles based on post-training feedback and real-world application.
+  human: |
+    Create a follow-up survey to refine the learner profile for this course:
+    - Course Title: {course_title}
+    - Learner Profile: {learner_profile}
+
+    Include:
+    1. Questions about specific instances of skill application.
+    2. Challenges faced during application.
+    3. Suggestions for improving the learner experience.
+    Format the survey in markdown.
+
+# Scenario-Based Question Template
+scenario_based_question_template:
+  system: >
+    You are an expert in creating scenario-based survey questions to assess learners' application of new skills in realistic contexts.
+  human: |
+    Create scenario-based questions for this course:
+    - Course Title: {course_title}
+    - Course Objectives: {course_objectives}
+    - Key Skills Taught: {key_skills}
+
+    Include:
+    1. Realistic work scenarios learners might encounter.
+    2. Questions asking how they would apply specific skills or techniques.
+    3. Include actionable answer choices based on performance-focused language.
+    Format questions in markdown.
+
+# Open-Ended Questions Template
+open_ended_questions_template:
+  system: >
+    You are an expert in designing open-ended survey questions that gather rich, actionable feedback from learners.
+  human: |
+    Create open-ended survey questions for this course:
+    - Course Title: {course_title}
+    - Course Objectives: {course_objectives}
+
+    Include:
+    1. Questions about the most valuable skills or concepts learned.
+    2. Questions asking about anticipated or experienced challenges in applying the skills.
+    3. Questions seeking suggestions for improving the course.
+    Format questions in markdown.
+
+# Course Refinement Template
+course_refinement_template:
+  system: >
+    You are an expert instructional designer focusing on iterative course refinement based on learner feedback and updated profiles.
+  human: |
+    Refine the course design based on updated learner profiles:
+    - Course Title: {course_title}
+    - Learner Profile: {learner_profile}
+    - Post-Training Survey Data: {survey_data}
+
+    Include:
+    1. Changes to learning objectives or content.
+    2. Adjustments to delivery methods or activities.
+    3. Strategies for addressing identified barriers.
+
+# Visual Learning Design Templates
+visual_initial_assessment_template:
+  system: >
+    You are an AI Visual Learning Design Assistant specializing in accessible, effective visual elements for learning programs.
+  human: |
+    Let's create a visual for your learning content:
+    - What specific concept, process, or relationship do you want to visualize?
+    - What is the primary learning objective?
+    - What is the target audience level?
+    - What accessibility requirements must be met?
+
+visual_analysis_template:
+  system: >
+    You specialize in analyzing learning content to identify the most effective visual patterns while ensuring accessibility.
+  human: |
+    Analyze this content to recommend an appropriate visual:
+    - Learning Content: {learning_content}
+    - Primary Objective: {learning_objective}
+    - Target Audience: {target_audience}
+
+    Include:
+    1. Content Classification:
+       - Procedural (steps, workflows)
+       - Conceptual (ideas, theories)
+       - Relational (connections, systems)
+       - Decision-based (choices, outcomes)
+    2. Recommended visual patterns based on classification.
+    3. Accessible alternatives for each visual pattern.
+
+visual_design_template:
+  system: >
+    You are an expert in designing accessible visuals for learning programs. Your task is to provide detailed recommendations for creating effective visuals.
+  human: |
+    Based on the recommended visual pattern:
+    - Visual Type: {visual_type}
+    - Content Classification: {content_classification}
+    - Accessibility Requirements: {accessibility_requirements}
+
+    Provide:
+    ## 1. Core Components
+    - Primary content
+    - Navigation elements
+    - Interactive components
+    - Accessibility features
+
+    ## 2. Visual Hierarchy
+    - Main headings (H1)
+    - Key interaction points
+    - Critical information
+    - Supporting elements
+
+    ## 3. Accessibility Implementation
+    - Text alternatives (alt text, descriptions)
+    - ARIA labels and roles
+    - Keyboard navigation
+    - Contrast and typography compliance
+
+visual_error_handling_template:
+  system: >
+    You specialize in identifying and resolving gaps in visual content design for learning programs.
+  human: |
+    The following issues need to be clarified:
+    - Specific learning outcome
+    - Accessibility requirements
+    - User interaction needs
+    - Technical constraints
+
+    Propose:
+    1. A simplified breakdown of the visual concept.
+    2. Steps to address accessibility or user experience gaps.
+    3. Suggestions for alternative formats or approaches.
+
+visual_quality_check_template:
+  system: >
+    You specialize in ensuring quality and accessibility in visual learning materials. Your task is to evaluate a proposed visual design for compliance and effectiveness.
+  human: |
+    Evaluate the following visual design for quality:
+    - Visual Description: {visual_description}
+    - Learning Objective: {learning_objective}
+    - Accessibility Features: {accessibility_features}
+
+    Include:
+    ## Learning Alignment
+    - Does the visual support the objective?
+    - Is the information flow clear?
+    - Is the complexity appropriate for the audience?
+
+    ## Technical Implementation
+    - Is the design WCAG 2.1 AA compliant?
+    - Does it use semantic HTML structure?
+    - Are ARIA roles implemented correctly?
+
+    ## User Experience
+    - Is the visual hierarchy clear?
+    - Is navigation intuitive?
+    - Are errors prevented or mitigated?
+    - Are alternative formats available?
+
+landing_page_template:
+  system: >
+    You are a marketing and instructional design expert specializing in crafting high-converting landing pages for learning programs. Your task is to create a learner-focused landing page tailored for LMS, email, or standalone use. The page should guide learners to take action, align with the course's goals, and ensure accessibility and clarity.
+  human: |
+    Create a landing page for this course:
+    - Course Title: {course_title}
+    - Learning Objectives: {learning_objectives}
+    - Delivery Format: {delivery_format} (e.g., LMS, email, hybrid)
+    - Target Audience: {target_audience} (e.g., mid-level managers, developers)
+    - Brand Tone/Style: {brand_tone} (e.g., professional, approachable, playful)
+    - Audience Pain Points: {audience_pain_points}
+    - Audience Motivations: {audience_motivations}
+    - Key Features: {course_features} (e.g., certification, self-paced, interactive)
+
+    Include:
+    ## 1. Hero Section
+    - Headline: A clear, engaging headline that highlights the main value of the course.
+    - Subheadline: A short, persuasive subheadline that elaborates on the headline.
+    - Hero Image/Video: A suggested theme or description of visuals.
+
+    ## 2. Benefits Section
+    - Headline: A benefits-focused headline.
+    - 3-5 bullet points highlighting key learner benefits (e.g., career growth, practical application).
+
+    ## 3. Course Features Section
+    - Modules overview or content highlights.
+    - Format, support, and certification details.
+
+    ## 4. Testimonials/Success Stories Section
+    - At least 2 learner success stories or quotes that inspire confidence.
+    - Any relevant statistics or metrics.
+
+    ## 5. Call-to-Action (CTA)
+    - Suggested CTA text and placement (e.g., "Enroll Now," "Start Your Journey").
+    - Emphasize urgency or value where appropriate (e.g., "Limited spots available—register today.").
+
+    ## 6. Trust Indicators Section
+    - Certification details, badges, or guarantees.
+    - Security or accessibility assurances (e.g., WCAG compliance).
+
+    ## 7. FAQ Section
+    - Address common questions learners may have about the course.
+
+    Format the output as structured markdown with appropriate headings.
+
+success_metrics_template:
+  system: >
+    You are an expert in instructional design and program evaluation. Your task is to define success metrics for a course or program based on its learning objectives, target audience, and delivery method.
+  human: |
+    Create a set of success metrics for this course:
+    - Course Title: {course_title}
+    - Learning Objectives: {learning_objectives}
+    - Delivery Method: {delivery_method}
+    - Target Audience: {target_audience}
+    - Organizational Goals: {organizational_goals}
+
+    Include:
+    ## 1. Learner-Focused Metrics
+    - Metrics for assessing knowledge and skill acquisition.
+    - Metrics for evaluating skill application in real-world scenarios.
+    - Metrics for measuring learner satisfaction.
+
+    ## 2. Organizational Impact Metrics
+    - Metrics for tracking alignment with business or organizational goals.
+    - Metrics for calculating ROI or compliance improvements.
+
+    ## 3. Engagement Metrics
+    - Metrics for tracking course engagement (e.g., completion rates, module interaction).
+    - Metrics for measuring long-term engagement.
+
+    Provide actionable recommendations for collecting and analyzing these metrics.
+
+delivery_format_template:
+  system: >
+    You are an expert in learning delivery methods. Your task is to recommend a delivery format for a program based on its goals, audience, and constraints.
+  human: |
+    Recommend a delivery format for:
+    - Program Objectives: {program_objectives}
+    - Target Audience: {target_audience}
+    - Resource Constraints: {resource_constraints}
+
+    Include:
+    1. The recommended format (e.g., self-paced, instructor-led, hybrid).
+    2. Rationale for the choice based on audience and goals.
+    3. Key technical or logistical considerations for implementation.
+
+resource_constraints_template:
+  system: >
+    You are a program management expert specializing in resource planning. Your task is to evaluate constraints for an MVP program.
+  human: |
+    Define resource constraints for:
+    - Program Objectives: {program_objectives}
+    - Delivery Format: {delivery_format}
+
+    Include:
+    1. Budget (if available, provide a breakdown by category).
+    2. Development timeframe.
+    3. Available tools, platforms, or technology.
+    4. Personnel involved and their roles.
+
+core_features_template:
+  system: >
+    You are an instructional designer specializing in MVP development. Your task is to define the core features needed for a successful MVP program.
+  human: |
+    Define core features for:
+    - Program Objectives: {program_objectives}
+    - Delivery Format: {delivery_format}
+    - Content Scope: {content_scope}
+
+    Include:
+    1. Features required to meet learning objectives (e.g., modules, assessments, quizzes).
+    2. Support elements (e.g., instructor Q&A, forums, help center).
+    3. Accessibility requirements (e.g., WCAG compliance, alt text).
+
+testing_plan_template:
+  system: >
+    You are an instructional design and program evaluation expert. Your task is to create a testing plan for an MVP program to collect actionable feedback.
+  human: |
+    Define a testing plan for:
+    - Program Objectives: {program_objectives}
+    - Target Audience: {target_audience}
+    - Core Features: {core_features}
+
+    Include:
+    1. Pilot audience and selection criteria.
+    2. Feedback collection methods (e.g., surveys, interviews).
+    3. Success metrics for evaluating the MVP.
+    4. Steps for refining the program based on feedback.
+
+marketing_goals_template:
+  system: >
+    You are a marketing and instructional design expert. Your task is to create a launch plan for an MVP program.
+  human: |
+    Define marketing and launch goals for:
+    - Program Objectives: {program_objectives}
+    - Target Audience: {target_audience}
+    - Delivery Format: {delivery_format}
+
+    Include:
+    1. The primary goal of the launch (e.g., validating learner interest, collecting feedback).
+    2. Recommended channels for promoting the program.
+    3. Messaging aligned with audience needs and motivations.
+    4. Metrics for measuring launch success.
+
+gtm_strategy_template:
+  system: >
+    You are a Go-to-Market expert specializing in launching learning programs. Your task is to create a GTM strategy that ensures learner adoption, organizational alignment, and post-launch success.
+  human: |
+    Create a Go-to-Market strategy for this learning program:
+    - Program Title: {program_title}
+    - Learner Profile: {learner_profile}
+    - Organizational Goals: {organizational_goals}
+    - Delivery Format: {delivery_format}
+    - Unique Value Proposition: {uvp}
+
+    Include:
+    ## 1. GTM Goals and Objectives
+    - Define specific goals for learner adoption, organizational alignment, and success metrics.
+
+    ## 2. Target Market
+    - Segment the audience into primary learners and secondary stakeholders.
+    - Describe their roles, needs, and motivations.
+
+    ## 3. Unique Value Proposition
+    - Articulate the program's unique value for learners and stakeholders.
+
+    ## 4. Channels and Tactics
+    - Recommend channels for reaching learners and stakeholders.
+    - Provide examples of tactics for promotion.
+
+    ## 5. Enablement Resources
+    - Suggest resources for stakeholders (e.g., sales/HR collateral).
+    - Suggest resources for learners (e.g., onboarding guides).
+
+    ## 6. Operational Readiness
+    - Outline steps to ensure technology, accessibility, and support readiness.
+
+    ## 7. Success Metrics
+    - Define metrics for evaluating GTM success.
+
+    ## 8. Feedback Loops
+    - Suggest mechanisms for collecting and acting on feedback post-launch.
+
+    Format the output as structured markdown.
+
+stakeholder_alignment_template:
+  system: >
+    You are an expert in aligning cross-functional stakeholders for learning programs. Your task is to create a stakeholder alignment plan for a learning program.
+  human: |
+    Create a stakeholder alignment plan for:
+    - Program Objectives: {program_objectives}
+    - Organizational Goals: {organizational_goals}
+    - Resource Constraints: {resource_constraints}
+
+    Include:
+    1. Key stakeholders (e.g., HR, IT, marketing).
+    2. Their roles and responsibilities in program development and implementation.
+    3. Communication plans to ensure alignment and updates.
+    4. Success criteria for stakeholder engagement.
+
+learner_engagement_template:
+  system: >
+    You are an expert in maintaining learner engagement during program implementation. Your task is to create an engagement plan to ensure learners complete the program.
+  human: |
+    Create a learner engagement plan for:
+    - Program Title: {program_title}
+    - Target Audience: {learner_profile}
+    - Delivery Format: {delivery_format}
+
+    Include:
+    1. Strategies to maintain motivation (e.g., gamification, reminders).
+    2. Tools for real-time support (e.g., forums, chatbots, live Q&A).
+    3. Approaches to address drop-offs (e.g., mid-course surveys, targeted emails).
+    4. Metrics to evaluate engagement success.
+
+continuous_improvement_template:
+  system: >
+    You are an expert in iterative program design. Your task is to create a framework for continuous improvement of a learning program.
+  human: |
+    Create a continuous improvement framework for:
+    - Program Title: {program_title}
+    - Feedback Mechanisms: {feedback_mechanisms}
+    - Success Metrics: {success_metrics}
+
+    Include:
+    1. A process for collecting and analyzing feedback.
+    2. Steps for prioritizing improvements based on feedback and metrics.
+    3. A schedule for reviewing and updating course content.
+    4. Strategies for communicating updates to stakeholders and learners.
+
+ai_opportunities_template:
+  system: >
+    You are an expert in instructional design and AI integration. Your task is to identify opportunities to use AI in courses to improve learning outcomes, engagement, and efficiency.
+  human: |
+    Identify opportunities to integrate AI into this course:
+    - Course Title: {course_title}
+    - Learning Objectives: {learning_objectives}
+    - Delivery Format: {delivery_format}
+    - Target Audience: {target_audience}
+
+    Include:
+    ## 1. Content Creation
+    - Ways AI can support creating course content (e.g., auto-generating text, visuals, quizzes).
+    - Tools or techniques for rapid content generation.
+
+    ## 2. Learner Engagement
+    - Opportunities to use AI for interactive elements (e.g., chatbots, virtual simulations, gamification).
+    - Methods to analyze and predict learner engagement levels.
+
+    ## 3. Adaptive Learning
+    - How AI can provide real-time feedback and adjust difficulty levels or content.
+    - AI-driven recommendations for additional resources or topics based on learner performance.
+
+    ## 4. Assessment and Feedback
+    - How AI can automate grading and provide personalized feedback.
+    - Opportunities for AI-driven assessments (e.g., scenario simulations, adaptive quizzes).
+
+    ## 5. Administrative Efficiency
+    - AI tools to streamline administrative tasks (e.g., progress tracking, email reminders).
+    - Automation opportunities for scheduling and learner support.
+
+    Provide examples or tools wherever applicable.
+
+personalization_opportunities_template:
+  system: >
+    You are an instructional designer specializing in personalized learning experiences. Your task is to recommend strategies for personalizing courses to maximize learner engagement and outcomes.
+  human: |
+    Recommend personalization opportunities for this course:
+    - Course Title: {course_title}
+    - Target Audience: {target_audience}
+    - Learning Objectives: {learning_objectives}
+    - Delivery Format: {delivery_format}
+    - Available Resources: {available_resources}
+
+    Include:
+    ## 1. AI-Driven Personalization
+    - Opportunities to use AI to adapt content (e.g., personalized learning paths, content recommendations).
+    - Tools or techniques for delivering personalized feedback or coaching.
+
+    ## 2. Content Personalization
+    - Strategies to customize content based on learner profiles (e.g., industry-specific examples, role-based activities).
+    - Ways to offer optional modules or resources tailored to individual interests.
+
+    ## 3. Interaction Personalization
+    - Approaches to personalize interactions (e.g., peer-group assignments, personalized discussion prompts).
+    - Tools for real-time learner support (e.g., chatbots, live mentoring).
+
+    ## 4. Assessment Personalization
+    - Techniques to personalize assessments (e.g., scenario-based tasks, real-world applications relevant to the learner).
+    - Adaptive quizzes or project-based assessments tailored to learner performance.
+
+    ## 5. Non-AI Personalization
+    - Opportunities to personalize content or delivery manually (e.g., instructor-led customization, learner-selected topics).
+    - Role of peer learning or collaborative activities in creating a personalized experience.
+
+    Provide specific examples or tools where applicable.
+
+case_study_exercise_template:
+  system: >
+    You are an expert instructional designer specializing in creating case study exercises for adult learners. Your task is to design a case study exercise that aligns with the course objectives, engages learners, and includes profiles, scenarios, and visuals to bring the case study to life.
+  human: |
+    Create a case study exercise for this course:
+    - Course Title: {course_title}
+    - Learning Objectives: {learning_objectives}
+    - Target Audience: {target_audience}
+    - Delivery Format: {delivery_format}
+
+    Include:
+    ## 1. Exercise Overview
+    - A brief description of the case study and its relevance to the learning objectives.
+    - The main problem or challenge the learners will address.
+
+    ## 2. Best Scenarios
+    - Design 1-3 realistic scenarios that align with the learning objectives.
+    - For each scenario, specify:
+      - The situation or context.
+      - The decision points or challenges learners must resolve.
+      - The expected learning outcomes.
+
+    ## 3. Profiles or Personas
+    - Create 2-4 profiles of individuals or organizations involved in the case study.
+    - For each profile, include:
+      - Role or job title.
+      - Background information.
+      - Goals, motivations, and challenges.
+
+    ## 4. Visual Elements (DALL-E Prompts)
+    - For each scenario or profile, provide a prompt to generate a visual element that enhances the case study. Ensure visuals are engaging and relevant to the context.
+
+    ## 5. Evaluation Criteria
+    - Provide metrics or rubrics for evaluating learner performance during the exercise.
+
+    Format the output as structured markdown.
+
+research_quotes_statistics_template:
+  system: >
+    You are an expert researcher specializing in finding impactful quotes and credible statistics to support educational content. Your task is to identify quotes and statistics that align with the core learning objectives of the module.
+  human: |
+    Research quotes and statistics for this module:
+    - Module Title: {module_title}
+    - Core Learning Objective: {learning_objective}
+    - Target Audience: {target_audience}
+    - Module Focus: {module_focus} (e.g., technical skills, leadership, soft skills)
+
+    Include:
+    ## 1. Quotes
+    - Find 2-3 quotes from reputable sources (e.g., industry leaders, academics, influential thinkers) that align with the core learning objective.
+    - Provide the source and context for each quote.
+    - Ensure the quotes are concise and relevant to the module focus.
+
+    ## 2. Statistics
+    - Find 2-3 statistics from credible, up-to-date sources (e.g., industry reports, government data, academic studies) that support the learning objective.
+    - Provide the source, date, and a brief explanation of why the statistic is relevant.
+    - Ensure the statistics are easy to understand and impactful.
+
+    ## 3. Alignment Explanation
+    - For each quote and statistic, explain how it supports the core learning objective and resonates with the target audience.
+
+    Provide the output in a structured markdown format.
+
+poll_placement_template:
+  system: >
+    You are an expert instructional designer specializing in learner engagement strategies. Your task is to recommend the placement of polls across a course to break up content, gather insights, and engage learners. Focus on maximizing engagement and aligning with the course's objectives.
+  human: |
+    Recommend poll placements for this course:
+    - Course Title: {course_title}
+    - Learning Objectives: {learning_objectives}
+    - Target Audience: {target_audience}
+    - Delivery Format: {delivery_format}
+
+    Include:
+    ## 1. General Poll Placement Guidelines
+    - Opportunities to break up dense or monotonous content.
+    - Points where learner engagement is typically low.
+    - Moments to gather feedback or insights about learner understanding.
+
+    ## 2. Specific Recommendations
+    - For each poll, specify:
+      - Where in the course it should be placed (e.g., introduction, mid-course, post-assessment).
+      - The purpose of the poll (e.g., engagement, data gathering, learner reflection).
+      - A suggested poll question and format (e.g., multiple choice, ranking, open-ended).
+
+    ## 3. Alignment with Course Objectives
+    - Explain how each poll supports the course objectives or learner engagement.
+
+    ## 4. Additional Insights
+    - Highlight how poll responses can inform course improvements or provide value to learners.
+
+zoom_poll_generation_template:
+  system: >
+    You are an expert in instructional design and learner engagement, specializing in creating effective polls for live learning sessions on Zoom. Your task is to generate poll questions that align with the course objectives, enhance engagement, and provide actionable insights for instructors.
+  human: |
+    Generate polls for this live session:
+    - Session Title: {session_title}
+    - Key Learning Objective: {learning_objective}
+    - Target Audience: {target_audience}
+    - Session Focus: {session_focus} (e.g., understanding concepts, applying skills, reflecting on learning)
+
+    Include:
+    ## 1. Poll Types
+    - Suggested poll types (e.g., multiple choice, ranking, open-ended).
+
+    ## 2. Recommended Poll Questions
+    - Provide 2-3 poll questions for the session.
+    - For each question, specify:
+      - The purpose of the poll (e.g., engagement, assessment, reflection).
+      - The ideal timing during the session (e.g., start, middle, end).
+
+    ## 3. Alignment Explanation
+    - Explain how each poll supports the session's learning objective.
+
+    ## 4. Technical Guidance
+    - Tips for setting up the poll on Zoom.
+    - Suggestions for how to share and discuss results with learners.
+
+pop_culture_engagement_template:
+  system: >
+    You are an expert in instructional design and learner engagement. Your task is to suggest memes, comics, or pop culture references that align with the course objectives and improve engagement. Ensure that suggestions are relevant, inclusive, and appropriate for the target audience.
+  human: |
+    Suggest memes, comics, or pop culture references for this course:
+    - Course Title: {course_title}
+    - Learning Objectives: {learning_objectives}
+    - Target Audience: {target_audience}
+    - Course Focus: {course_focus} (e.g., technical skills, soft skills)
+    - Delivery Format: {delivery_format}
+
+    Include:
+    ## 1. General Guidance
+    - Types of humor or references suitable for the target audience.
+    - Best practices for using memes or comics in educational content.
+
+    ## 2. Specific Recommendations
+    - For each module or section, suggest:
+      - Relevant memes or pop culture references (e.g., popular TV shows, movies, viral trends).
+      - The context in which to use them (e.g., breaking up dense content, emphasizing a point, transitioning between topics).
+      - How to adapt or create a meme or comic if a direct one isn't available.
+
+    ## 3. Alignment with Objectives
+    - Explain how each recommendation supports learner engagement and aligns with the course objectives.
+

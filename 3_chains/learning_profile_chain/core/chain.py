@@ -26,14 +26,15 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def combine_inputs(data: Dict[str, Any]) -> Dict[str, str]:
-    """Combine profile chain output with original inputs for goals generation."""
+def combine_inputs(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Combine chain outputs with original inputs for goals generation."""
     try:
         if not data.get("profile") or not isinstance(data["profile"], str):
             raise ChainOutputError("Invalid or empty profile output from chain")
             
-        ChainOutputValidator.validate_profile_output(data["profile"])
-        
+        if not data.get("jtbd_analysis") or not isinstance(data["jtbd_analysis"], str):
+            raise ChainOutputError("Invalid or empty JTBD analysis from chain")
+            
         if not data.get("original_input"):
             raise ProfileValidationError("Missing original input data")
             
@@ -47,8 +48,11 @@ def combine_inputs(data: Dict[str, Any]) -> Dict[str, str]:
         
         return {
             "learner_profile": data["profile"],
+            "jtbd_analysis": data["jtbd_analysis"],
             "coach_goal": original["coach_goal"],
-            "coach_outcomes": original["coach_outcomes"]
+            "coach_outcomes": original["coach_outcomes"],
+            "target_audience": original["target_audience"],
+            "learning_objectives": original["learning_objectives"]
         }
     except Exception as e:
         raise ChainOutputError(f"Error combining inputs: {str(e)}") from e
@@ -71,7 +75,7 @@ def create_chain(model_name: str = DEFAULT_MODEL):
         )
 
         # Load templates
-        profile_template, goals_template = load_templates()
+        profile_template, jtbd_template, goals_template = load_templates()
 
         # Create the profile chain
         profile_chain = (
@@ -80,52 +84,75 @@ def create_chain(model_name: str = DEFAULT_MODEL):
             | StrOutputParser()
         ).with_config({"run_name": "Profile Generation Chain"})
 
-        # Create the full chain
-        chain_map = RunnableMap({
-            "profile": profile_chain,
-            "original_input": RunnablePassthrough()
-        }).with_config({"run_name": "Profile Map Chain"})
+        # Create the JTBD chain
+        jtbd_chain = (
+            jtbd_template 
+            | model.with_config({"callbacks": [progress_handler], "tags": ["jtbd_analysis"]}) 
+            | StrOutputParser()
+        ).with_config({"run_name": "JTBD Analysis Chain"})
 
-        return (
-            chain_map
-            | combine_inputs
+        # Create the initial chain map for profile and JTBD
+        initial_chain_map = RunnableMap({
+            "profile": profile_chain,
+            "jtbd_analysis": jtbd_chain,
+            "original_input": RunnablePassthrough()
+        }).with_config({"run_name": "Initial Chain Map"})
+
+        # Create the goals chain
+        goals_chain = (
+            combine_inputs
             | goals_template 
             | model.with_config({"callbacks": [progress_handler], "tags": ["goals_generation"]})
             | StrOutputParser()
-        ).with_config({"run_name": "Learning Goals Generation Chain"})
+        ).with_config({"run_name": "Goals Generation Chain"})
+
+        # Return both chains for separate execution
+        return initial_chain_map, goals_chain
     except Exception as e:
         raise RuntimeError(f"Failed to create chain: {str(e)}") from e
 
-def process_profile(input_data: Dict[str, Any], model_name: str = DEFAULT_MODEL) -> str:
+def process_profile(input_data: Dict[str, Any], model_name: str = DEFAULT_MODEL) -> Dict[str, str]:
     """
     Process a learner profile to generate personalized learning goals.
     
     Args:
         input_data: Dictionary containing profile information
         model_name: Name of the OpenAI model to use. Defaults to DEFAULT_MODEL.
+        
+    Returns:
+        Dictionary containing learner profile, JTBD analysis, and learning goals
     """
     try:
         # Validate input
         validated_input = ProfileInput.from_dict(input_data)
         
-        # Create and run chain
-        chain = create_chain(model_name)
+        # Create chains
+        initial_chain, goals_chain = create_chain(model_name)
         print(f"\n🚀 Starting the learning profile and goals generation pipeline using {model_name}...\n")
         
-        result = chain.invoke(
+        # Run initial chain to get profile and JTBD analysis
+        initial_outputs = initial_chain.invoke(
             input_data,
             config={"callbacks": [ChainProgressCallbackHandler()]}
         )
         
-        # Validate output
-        if not result or not isinstance(result, str):
-            raise ChainOutputError("Chain produced invalid or empty output")
-            
-        ChainOutputValidator.validate_goals_output(
-            result,
-            input_data["coach_goal"],
-            input_data["coach_outcomes"]
+        # Run goals chain with combined inputs
+        goals_output = goals_chain.invoke(
+            initial_outputs,
+            config={"callbacks": [ChainProgressCallbackHandler()]}
         )
+        
+        # Structure the results
+        result = {
+            "learner_profile": initial_outputs["profile"],
+            "jtbd_analysis": initial_outputs["jtbd_analysis"],
+            "course_goals": goals_output,
+            "course_structure": ""  # This will be populated by a future chain
+        }
+        
+        # Basic validation of outputs
+        if not result["learner_profile"] or not result["jtbd_analysis"] or not result["course_goals"]:
+            raise ChainOutputError("One or more chain outputs are empty")
         
         return result
         

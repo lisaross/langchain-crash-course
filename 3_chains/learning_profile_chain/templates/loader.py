@@ -9,7 +9,7 @@ from langchain.prompts import ChatPromptTemplate
 from ..models.validators import TemplateLoadError
 from ..config.constants import TEMPLATE_FILE
 
-def load_templates(template_path: str = TEMPLATE_FILE) -> Tuple[ChatPromptTemplate, ChatPromptTemplate]:
+def load_templates(template_path: str = TEMPLATE_FILE) -> Tuple[ChatPromptTemplate, ChatPromptTemplate, ChatPromptTemplate]:
     """
     Load and validate prompt templates from a YAML file.
 
@@ -17,7 +17,7 @@ def load_templates(template_path: str = TEMPLATE_FILE) -> Tuple[ChatPromptTempla
         template_path: Path to the YAML template file.
 
     Returns:
-        Tuple containing profile_template and goals_template.
+        Tuple containing profile_template, jtbd_template, and goals_template.
 
     Raises:
         TemplateLoadError: If template loading or validation fails.
@@ -32,7 +32,7 @@ def load_templates(template_path: str = TEMPLATE_FILE) -> Tuple[ChatPromptTempla
         with open(full_path, 'r') as file:
             templates = yaml.safe_load(file)
             
-        required_templates = ['profile_template', 'goals_template']
+        required_templates = ['profile_template', 'jtbd_template', 'goals_template']
         for template_name in required_templates:
             if template_name not in templates:
                 raise TemplateLoadError(f"Missing template: {template_name}")
@@ -46,12 +46,17 @@ def load_templates(template_path: str = TEMPLATE_FILE) -> Tuple[ChatPromptTempla
             ("human", templates['profile_template']['human'])
         ])
         
+        jtbd_template = ChatPromptTemplate.from_messages([
+            ("system", templates['jtbd_template']['system']),
+            ("human", templates['jtbd_template']['human'])
+        ])
+        
         goals_template = ChatPromptTemplate.from_messages([
             ("system", templates['goals_template']['system']),
             ("human", templates['goals_template']['human'])
         ])
         
-        return profile_template, goals_template
+        return profile_template, jtbd_template, goals_template
         
     except yaml.YAMLError as e:
         raise TemplateLoadError(f"Failed to parse YAML template file: {str(e)}")
