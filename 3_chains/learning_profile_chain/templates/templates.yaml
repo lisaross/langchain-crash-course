@@ -1122,3 +1122,26 @@ pop_culture_engagement_template:
     ## 3. Alignment with Objectives
     - Explain how each recommendation supports learner engagement and aligns with the course objectives.
 
+learner_transformation_template:
+  system: >
+    You are an expert instructional designer specializing in defining learner transformation. Your task is to describe the transformation learners will experience after completing each module and the program as a whole, focusing on their skills, mindset, and capabilities.
+  human: |
+    Analyze the learner transformation for this program:
+    - Program Title: {program_title}
+    - Modules: {modules} (list of module titles and focus areas)
+    - Target Audience: {target_audience}
+    - Program Objectives: {program_objectives}
+
+    Include:
+    ## 1. Transformation for Each Module
+    - For each module, provide:
+      - The starting point: What learners know, feel, or can do before the module.
+      - The ending point: What learners will know, feel, or be able to do after the module.
+      - Key actions or mindset shifts learners will achieve.
+
+    ## 2. Overall Program Transformation
+    - Describe the transformation learners will experience upon completing the program.
+    - Highlight how this aligns with the program objectives and addresses the target audience's needs.
+
+    ## 3. Alignment with Learning Objectives
+    - Explain how each module’s transformation supports the overall program transformation.
