@@ -76,6 +76,83 @@ class ProfileInput:
             coach_outcomes=data['coach_outcomes']
         )
 
+class ChainOutputValidator:
+    """Validates chain outputs against expected criteria"""
+    
+    PROFILE_REQUIRED_CONCEPTS = {
+        'jtbd': ['jtbd', 'jobs to be done', 'job to be done', 'needs to accomplish'],
+        'challenges': ['challenges', 'obstacles', 'difficulties', 'pain points'],
+        'skills': ['skills gap', 'skill gaps', 'missing skills', 'needs to learn', 'areas for improvement']
+    }
+    MIN_OUTPUT_LENGTH = 100  # Minimum characters for meaningful output
+    
+    @classmethod
+    def _contains_concept(cls, text: str, concept_variants: List[str]) -> bool:
+        """Check if text contains any variant of a concept"""
+        return any(variant in text.lower() for variant in concept_variants)
+    
+    @classmethod
+    def validate_profile_output(cls, output: str) -> None:
+        """
+        Validates the profile chain output.
+        
+        Args:
+            output: String output from profile chain
+            
+        Raises:
+            ChainOutputError: If validation fails
+        """
+        if not output or len(output.strip()) < cls.MIN_OUTPUT_LENGTH:
+            raise ChainOutputError("Profile output is too short or empty")
+            
+        # Convert to lowercase for case-insensitive checking
+        output_lower = output.lower()
+        
+        # Check for required concepts using their variants
+        missing_concepts = [
+            concept for concept, variants in cls.PROFILE_REQUIRED_CONCEPTS.items()
+            if not cls._contains_concept(output_lower, variants)
+        ]
+        
+        if missing_concepts:
+            raise ChainOutputError(
+                f"Profile output missing required concepts: {', '.join(missing_concepts)}"
+            )
+    
+    @classmethod
+    def validate_goals_output(cls, output: str, coach_goal: str, coach_outcomes: str) -> None:
+        """
+        Validates the final goals output.
+        
+        Args:
+            output: String output from goals chain
+            coach_goal: Original coaching goal
+            coach_outcomes: Original desired outcomes
+            
+        Raises:
+            ChainOutputError: If validation fails
+        """
+        if not output or len(output.strip()) < cls.MIN_OUTPUT_LENGTH:
+            raise ChainOutputError("Goals output is too short or empty")
+            
+        # Check if goals align with organizational objectives
+        coach_keywords = set(word.lower() for word in 
+                           (coach_goal + " " + coach_outcomes).split())
+        output_words = set(output.lower().split())
+        
+        # Ensure at least 30% of coach keywords are present in output
+        matching_keywords = coach_keywords.intersection(output_words)
+        if len(matching_keywords) < len(coach_keywords) * 0.3:
+            raise ChainOutputError(
+                "Goals output does not sufficiently address organizational objectives"
+            )
+            
+        # Verify JTBD alignment using variants
+        if not cls._contains_concept(output, cls.PROFILE_REQUIRED_CONCEPTS['jtbd']):
+            raise ChainOutputError(
+                "Goals output does not explicitly address learner's Jobs To Be Done (JTBD)"
+            )
+
 def load_templates(template_path: str = "templates.yaml") -> Tuple[ChatPromptTemplate, ChatPromptTemplate]:
     """
     Load templates from YAML file.
@@ -242,7 +319,11 @@ except TemplateLoadError as e:
     raise
 
 # Create the LCEL chain
-profile_chain = profile_template | model | StrOutputParser()
+profile_chain = (
+    profile_template 
+    | model.with_config({"callbacks": [progress_handler], "tags": ["profile_generation"]}) 
+    | StrOutputParser()
+).with_config({"run_name": "Profile Generation Chain"})
 
 # Create a function to combine the profile with original inputs
 def combine_inputs(data: Dict[str, Any]) -> Dict[str, str]:
@@ -263,6 +344,9 @@ def combine_inputs(data: Dict[str, Any]) -> Dict[str, str]:
         # Validate profile output
         if not data.get("profile") or not isinstance(data["profile"], str):
             raise ChainOutputError("Invalid or empty profile output from chain")
+            
+        # Validate profile output content
+        ChainOutputValidator.validate_profile_output(data["profile"])
         
         # Validate original input
         if not data.get("original_input"):
@@ -293,15 +377,15 @@ def create_chain():
         chain_map = RunnableMap({
             "profile": profile_chain,
             "original_input": RunnablePassthrough()
-        })
+        }).with_config({"run_name": "Profile Map Chain"})
 
         return (
             chain_map
             | combine_inputs
             | goals_template 
-            | model 
+            | model.with_config({"callbacks": [progress_handler], "tags": ["goals_generation"]})
             | StrOutputParser()
-        )
+        ).with_config({"run_name": "Learning Goals Generation Chain"})
     except Exception as e:
         raise RuntimeError(f"Failed to create chain: {str(e)}") from e
 
@@ -335,6 +419,13 @@ def process_profile(input_data: Dict[str, Any]) -> str:
         
         if not result or not isinstance(result, str):
             raise ChainOutputError("Chain produced invalid or empty output")
+            
+        # Validate final goals output
+        ChainOutputValidator.validate_goals_output(
+            result,
+            input_data["coach_goal"],
+            input_data["coach_outcomes"]
+        )
             
         print("\n📝 Final Result:\n")
         return result
