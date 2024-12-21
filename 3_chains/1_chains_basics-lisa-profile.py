@@ -34,9 +34,33 @@ GPT4_MAX_TOKENS = 8192  # Maximum context length for GPT-4
 TOKEN_WARNING_THRESHOLD = 0.8  # Warn when token usage reaches 80% of limit
 
 class TokenMonitor:
-    """Monitors token usage for prompts and responses"""
+    """
+    Monitors and tracks token usage for LLM prompts and responses.
+
+    This class provides functionality to count tokens, track usage statistics,
+    and calculate associated costs for different LLM models. It includes
+    built-in support for GPT-4 and GPT-3.5 pricing tiers.
+
+    Attributes:
+        model_name (str): Name of the LLM model being monitored
+        tokenizer: Instance of tiktoken encoder for the specified model
+        total_prompt_tokens (int): Running count of tokens used in prompts
+        total_completion_tokens (int): Running count of tokens used in completions
+        max_tokens (int): Maximum context length for the model
+
+    Key Constraints:
+        - Assumes GPT-4 or GPT-3.5 pricing tiers
+        - Token limits are model-specific (8192 for GPT-4, 4096 for others)
+        - Warning threshold set at 80% of token limit
+    """
     
     def __init__(self, model_name: str = "gpt-4"):
+        """
+        Initialize the TokenMonitor with a specific model configuration.
+
+        Args:
+            model_name (str, optional): Name of the LLM model to monitor. Defaults to "gpt-4".
+        """
         self.model_name = model_name
         self.tokenizer = tiktoken.encoding_for_model(model_name)
         self.total_prompt_tokens = 0
@@ -44,7 +68,18 @@ class TokenMonitor:
         self.max_tokens = GPT4_MAX_TOKENS if "gpt-4" in model_name else 4096
     
     def count_tokens(self, text: Union[str, List[Dict[str, str]]]) -> int:
-        """Count tokens in text or message list"""
+        """
+        Count the number of tokens in text or a list of messages.
+
+        Args:
+            text: Either a string or a list of message dictionaries with 'content' keys
+
+        Returns:
+            int: Total number of tokens in the input
+
+        Note:
+            For message lists, only processes dictionaries with 'content' keys
+        """
         if isinstance(text, str):
             return len(self.tokenizer.encode(text))
         elif isinstance(text, list):
@@ -56,24 +91,31 @@ class TokenMonitor:
         return 0
     
     def log_usage(self, prompt_tokens: int, completion_tokens: int):
-        """Log token usage statistics"""
+        """
+        Log token usage statistics and calculate associated costs.
+
+        Args:
+            prompt_tokens (int): Number of tokens used in the prompt
+            completion_tokens (int): Number of tokens used in the completion
+
+        Outputs:
+            Prints a formatted summary of token usage and costs
+            Logs detailed information when in debug mode
+        """
         total_tokens = prompt_tokens + completion_tokens
         
-        # Calculate cost for this specific usage
         current_cost = self._calculate_cost(
             total_tokens,
             prompt_tokens=prompt_tokens,
             completion_tokens=completion_tokens
         )
         
-        # Always print token usage summary
         print(f"\n📊 Token Usage Summary:")
         print(f"  • Prompt Tokens: {prompt_tokens:,}")
         print(f"  • Completion Tokens: {completion_tokens:,}")
         print(f"  • Total Tokens: {total_tokens:,}")
         print(f"  • Cost: ${current_cost:.4f}")
         
-        # Log detailed information in debug mode
         logger.info(
             f"Token Usage - Prompt: {prompt_tokens}, "
             f"Completion: {completion_tokens}, "
@@ -83,34 +125,48 @@ class TokenMonitor:
     
     def _calculate_cost(self, total_tokens: int, prompt_tokens: Optional[int] = None, completion_tokens: Optional[int] = None) -> float:
         """
-        Calculate estimated cost based on current OpenAI pricing
-        
+        Calculate the estimated cost based on current OpenAI pricing tiers.
+
         Args:
-            total_tokens: Total tokens (used for backward compatibility)
-            prompt_tokens: Number of prompt tokens (if provided)
-            completion_tokens: Number of completion tokens (if provided)
+            total_tokens (int): Total number of tokens used
+            prompt_tokens (Optional[int]): Number of tokens in prompts
+            completion_tokens (Optional[int]): Number of tokens in completions
+
+        Returns:
+            float: Estimated cost in USD
+
+        Note:
+            If individual token counts aren't provided, assumes 40/60 prompt/completion split
         """
-        # If individual token counts aren't provided, estimate based on total
         if prompt_tokens is None or completion_tokens is None:
-            # Assume a typical 40/60 split between prompt and completion
             prompt_tokens = int(total_tokens * 0.4)
             completion_tokens = total_tokens - prompt_tokens
         
-        # GPT-4 pricing (as of 2024)
         if "gpt-4" in self.model_name:
-            prompt_cost = (prompt_tokens / 1000) * 0.03  # $0.03 per 1K tokens
-            completion_cost = (completion_tokens / 1000) * 0.06  # $0.06 per 1K tokens
+            prompt_cost = (prompt_tokens / 1000) * 0.03
+            completion_cost = (completion_tokens / 1000) * 0.06
         else:
-            # GPT-3.5 pricing
-            prompt_cost = (prompt_tokens / 1000) * 0.0015  # $0.0015 per 1K tokens
-            completion_cost = (completion_tokens / 1000) * 0.002  # $0.002 per 1K tokens
+            prompt_cost = (prompt_tokens / 1000) * 0.0015
+            completion_cost = (completion_tokens / 1000) * 0.002
         return prompt_cost + completion_cost
     
     def check_token_limit(self, prompt_tokens: int) -> Tuple[bool, str]:
-        """Check if token usage is approaching limits"""
+        """
+        Check if token usage is approaching model limits and provide warnings.
+
+        Args:
+            prompt_tokens (int): Number of tokens to check against limit
+
+        Returns:
+            Tuple[bool, str]: (is_safe, warning_message)
+                - is_safe: False if usage exceeds warning threshold
+                - warning_message: Empty string or warning with optimization suggestions
+
+        Note:
+            Warning threshold is set at TOKEN_WARNING_THRESHOLD (80%) of model's context limit
+        """
         usage_ratio = prompt_tokens / self.max_tokens
         
-        # Always show current usage
         print(f"\n📈 Current Token Usage: {prompt_tokens:,} ({usage_ratio:.1%} of limit)")
         
         if usage_ratio >= TOKEN_WARNING_THRESHOLD:
@@ -123,6 +179,15 @@ class TokenMonitor:
         return True, ""
     
     def _get_optimization_suggestions(self, current_tokens: int) -> str:
+        """
+        Generate optimization suggestions based on current token usage.
+
+        Args:
+            current_tokens (int): Current token count to evaluate
+
+        Returns:
+            str: Formatted string of optimization suggestions if usage is high
+        """
         suggestions = ["Optimization suggestions:"]
         if current_tokens > self.max_tokens * 0.5:
             suggestions.extend([
@@ -148,7 +213,22 @@ class TemplateLoadError(Exception):
 
 @dataclass
 class ProfileInput:
-    """Data class for profile input validation"""
+    """
+    Data class for validating and storing learner profile input data.
+
+    This class ensures that all required profile fields are present and valid
+    before processing through the LLM chain.
+
+    Attributes:
+        background (str): Professional and educational background
+        current_role (str): Current job role or position
+        experience_level (str): Level of professional experience
+        coach_goal (str): Primary goal for the coaching engagement
+        coach_outcomes (str): Desired outcomes from the coaching
+
+    Raises:
+        ProfileValidationError: If any field is missing, empty, or invalid
+    """
     background: str
     current_role: str
     experience_level: str
@@ -157,7 +237,31 @@ class ProfileInput:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'ProfileInput':
-        """Validate and create ProfileInput from dictionary"""
+        """
+        Create and validate a ProfileInput instance from a dictionary.
+
+        Args:
+            data (Dict[str, Any]): Dictionary containing profile input fields
+
+        Returns:
+            ProfileInput: Validated instance of ProfileInput
+
+        Raises:
+            ProfileValidationError: If validation fails for any field
+                - Missing required fields
+                - Non-string field values
+                - Empty or too short field values (< 3 chars)
+
+        Example:
+            >>> data = {
+                    "background": "Computer Science degree",
+                    "current_role": "Backend Developer",
+                    "experience_level": "Senior",
+                    "coach_goal": "Learn microservices",
+                    "coach_outcomes": "Build scalable systems"
+                }
+            >>> profile = ProfileInput.from_dict(data)
+        """
         required_fields = ['background', 'current_role', 'experience_level', 'coach_goal', 'coach_outcomes']
         
         # Check for missing fields
@@ -183,38 +287,65 @@ class ProfileInput:
         )
 
 class ChainOutputValidator:
-    """Validates chain outputs against expected criteria"""
+    """
+    Validates the output from LLM chains against predefined criteria.
+
+    This class ensures that chain outputs meet quality standards by checking for:
+    - Required concepts and themes
+    - Minimum content length
+    - Alignment with coaching goals and outcomes
+
+    Class Attributes:
+        PROFILE_REQUIRED_CONCEPTS (dict): Required concepts and their variants
+        MIN_OUTPUT_LENGTH (int): Minimum character length for valid outputs
+
+    Note:
+        The validator uses case-insensitive matching for concept detection
+    """
     
     PROFILE_REQUIRED_CONCEPTS = {
         'jtbd': ['jtbd', 'jobs to be done', 'job to be done', 'needs to accomplish'],
         'challenges': ['challenges', 'obstacles', 'difficulties', 'pain points'],
         'skills': ['skills gap', 'skill gaps', 'missing skills', 'needs to learn', 'areas for improvement']
     }
-    MIN_OUTPUT_LENGTH = 100  # Minimum characters for meaningful output
-    
+    MIN_OUTPUT_LENGTH = 100
+
     @classmethod
     def _contains_concept(cls, text: str, concept_variants: List[str]) -> bool:
-        """Check if text contains any variant of a concept"""
+        """
+        Check if text contains any variant of a given concept.
+
+        Args:
+            text (str): Text to check for concept variants
+            concept_variants (List[str]): List of possible concept variations
+
+        Returns:
+            bool: True if any variant is found in the text
+        """
         return any(variant in text.lower() for variant in concept_variants)
     
     @classmethod
     def validate_profile_output(cls, output: str) -> None:
         """
-        Validates the profile chain output.
-        
+        Validates the profile chain output against required criteria.
+
         Args:
-            output: String output from profile chain
-            
+            output (str): Generated profile text to validate
+
         Raises:
-            ChainOutputError: If validation fails
+            ChainOutputError: If validation fails due to:
+                - Empty or too short output
+                - Missing required concepts
+                - Insufficient content quality
+
+        Note:
+            All concept checking is case-insensitive
         """
         if not output or len(output.strip()) < cls.MIN_OUTPUT_LENGTH:
             raise ChainOutputError("Profile output is too short or empty")
             
-        # Convert to lowercase for case-insensitive checking
         output_lower = output.lower()
         
-        # Check for required concepts using their variants
         missing_concepts = [
             concept for concept, variants in cls.PROFILE_REQUIRED_CONCEPTS.items()
             if not cls._contains_concept(output_lower, variants)
@@ -228,32 +359,35 @@ class ChainOutputValidator:
     @classmethod
     def validate_goals_output(cls, output: str, coach_goal: str, coach_outcomes: str) -> None:
         """
-        Validates the final goals output.
-        
+        Validates the final goals output against coaching objectives.
+
         Args:
-            output: String output from goals chain
-            coach_goal: Original coaching goal
-            coach_outcomes: Original desired outcomes
-            
+            output (str): Generated goals text to validate
+            coach_goal (str): Original coaching goal
+            coach_outcomes (str): Original desired outcomes
+
         Raises:
-            ChainOutputError: If validation fails
+            ChainOutputError: If validation fails due to:
+                - Empty or too short output
+                - Insufficient alignment with coaching objectives
+                - Missing JTBD (Jobs To Be Done) alignment
+
+        Note:
+            Requires at least 30% keyword overlap with coaching objectives
         """
         if not output or len(output.strip()) < cls.MIN_OUTPUT_LENGTH:
             raise ChainOutputError("Goals output is too short or empty")
             
-        # Check if goals align with organizational objectives
         coach_keywords = set(word.lower() for word in 
                            (coach_goal + " " + coach_outcomes).split())
         output_words = set(output.lower().split())
         
-        # Ensure at least 30% of coach keywords are present in output
         matching_keywords = coach_keywords.intersection(output_words)
         if len(matching_keywords) < len(coach_keywords) * 0.3:
             raise ChainOutputError(
                 "Goals output does not sufficiently address organizational objectives"
             )
             
-        # Verify JTBD alignment using variants
         if not cls._contains_concept(output, cls.PROFILE_REQUIRED_CONCEPTS['jtbd']):
             raise ChainOutputError(
                 "Goals output does not explicitly address learner's Jobs To Be Done (JTBD)"
@@ -261,19 +395,27 @@ class ChainOutputValidator:
 
 def load_templates(template_path: str = "templates.yaml") -> Tuple[ChatPromptTemplate, ChatPromptTemplate]:
     """
-    Load templates from YAML file.
-    
+    Load and validate prompt templates from a YAML file.
+
     Args:
-        template_path: Path to the YAML template file
-        
+        template_path (str, optional): Path to the YAML template file. Defaults to "templates.yaml".
+
     Returns:
-        Tuple of (profile_template, goals_template)
-        
+        Tuple[ChatPromptTemplate, ChatPromptTemplate]: A tuple containing:
+            - profile_template: Template for generating learner profiles
+            - goals_template: Template for generating learning goals
+
     Raises:
-        TemplateLoadError: If template file is missing or malformed
+        TemplateLoadError: If template file is:
+            - Missing or inaccessible
+            - Malformed YAML
+            - Missing required templates
+            - Missing required message components
+
+    Note:
+        Templates must contain both 'system' and 'human' message components
     """
     try:
-        # Resolve template path relative to the script location
         script_dir = Path(__file__).parent
         full_path = script_dir / template_path
         
@@ -283,7 +425,6 @@ def load_templates(template_path: str = "templates.yaml") -> Tuple[ChatPromptTem
         with open(full_path, 'r') as file:
             templates = yaml.safe_load(file)
             
-        # Validate template structure
         required_templates = ['profile_template', 'goals_template']
         for template_name in required_templates:
             if template_name not in templates:
@@ -293,7 +434,6 @@ def load_templates(template_path: str = "templates.yaml") -> Tuple[ChatPromptTem
             if 'system' not in templates[template_name] or 'human' not in templates[template_name]:
                 raise TemplateLoadError(f"Missing system or human message in: {template_name}")
                 
-        # Create ChatPromptTemplates
         profile_template = ChatPromptTemplate.from_messages([
             ("system", templates['profile_template']['system']),
             ("human", templates['profile_template']['human'])
@@ -513,30 +653,37 @@ profile_chain = (
     | StrOutputParser()
 ).with_config({"run_name": "Profile Generation Chain"})
 
-# Create a function to combine the profile with original inputs
 def combine_inputs(data: Dict[str, Any]) -> Dict[str, str]:
     """
-    Combine profile output with original inputs for goals generation.
-    
+    Combine profile chain output with original inputs for goals generation.
+
+    This function validates and merges the profile generation output with the
+    original coaching inputs to prepare data for the goals generation phase.
+
     Args:
-        data: Dictionary containing profile output and original input
-        
+        data (Dict[str, Any]): Dictionary containing:
+            - profile: Generated profile text from first chain
+            - original_input: Original coaching input data
+
     Returns:
-        Combined dictionary for goals template
-        
+        Dict[str, str]: Combined dictionary containing:
+            - learner_profile: Validated profile text
+            - coach_goal: Original coaching goal
+            - coach_outcomes: Original desired outcomes
+
     Raises:
-        ChainOutputError: If profile output is missing or invalid
-        ProfileValidationError: If original input is invalid
+        ChainOutputError: If profile output is invalid or missing
+        ProfileValidationError: If original input is invalid or missing required fields
+
+    Note:
+        All inputs are validated before combination to ensure data integrity
     """
     try:
-        # Validate profile output
         if not data.get("profile") or not isinstance(data["profile"], str):
             raise ChainOutputError("Invalid or empty profile output from chain")
             
-        # Validate profile output content
         ChainOutputValidator.validate_profile_output(data["profile"])
         
-        # Validate original input
         if not data.get("original_input"):
             raise ProfileValidationError("Missing original input data")
             
@@ -544,7 +691,6 @@ def combine_inputs(data: Dict[str, Any]) -> Dict[str, str]:
         if not isinstance(original, dict):
             raise ProfileValidationError("Original input must be a dictionary")
             
-        # Validate required fields
         for field in ["coach_goal", "coach_outcomes"]:
             if not original.get(field) or not isinstance(original[field], str):
                 raise ProfileValidationError(f"Missing or invalid {field} in original input")
@@ -555,12 +701,26 @@ def combine_inputs(data: Dict[str, Any]) -> Dict[str, str]:
             "coach_outcomes": original["coach_outcomes"]
         }
     except Exception as e:
-        # Add context to the error
         raise ChainOutputError(f"Error combining inputs: {str(e)}") from e
 
-# Build the full chain using LCEL with error handling
 def create_chain():
-    """Create the full chain with error handling"""
+    """
+    Create the full learning goals generation chain using LCEL.
+
+    This function constructs a chain that:
+    1. Generates a learner profile
+    2. Combines profile with original inputs
+    3. Generates personalized learning goals
+
+    Returns:
+        Runnable: A complete chain that can be invoked with profile input data
+
+    Raises:
+        RuntimeError: If chain creation fails due to configuration or setup issues
+
+    Note:
+        The chain includes progress tracking and validation at each step
+    """
     try:
         chain_map = RunnableMap({
             "profile": profile_chain,
@@ -577,26 +737,42 @@ def create_chain():
     except Exception as e:
         raise RuntimeError(f"Failed to create chain: {str(e)}") from e
 
-# Example usage with error handling
 def process_profile(input_data: Dict[str, Any]) -> str:
     """
-    Process the profile with full error handling.
-    
+    Process a learner profile to generate personalized learning goals.
+
+    This is the main entry point for the learning goals generation pipeline.
+    It handles the complete process from input validation through goals generation.
+
     Args:
-        input_data: Dictionary containing profile input data
-        
+        input_data (Dict[str, Any]): Dictionary containing:
+            - background: Professional and educational background
+            - current_role: Current job role
+            - experience_level: Level of professional experience
+            - coach_goal: Primary coaching goal
+            - coach_outcomes: Desired coaching outcomes
+
     Returns:
-        Generated learning goals
-        
+        str: Generated learning goals aligned with coaching objectives
+
     Raises:
         ProfileValidationError: If input validation fails
         ChainOutputError: If chain processing fails
+        RuntimeError: For unexpected errors during processing
+
+    Example:
+        >>> input_data = {
+                "background": "Computer Science degree, 5 years Java experience",
+                "current_role": "Backend Developer",
+                "experience_level": "Senior developer",
+                "coach_goal": "Transform team to microservices",
+                "coach_outcomes": "Independent microservices implementation"
+            }
+        >>> goals = process_profile(input_data)
     """
     try:
-        # Validate input using ProfileInput
         validated_input = ProfileInput.from_dict(input_data)
         
-        # Create and invoke chain
         chain = create_chain()
         print("\n🚀 Starting the learning profile and goals generation pipeline...\n")
         
@@ -608,7 +784,6 @@ def process_profile(input_data: Dict[str, Any]) -> str:
         if not result or not isinstance(result, str):
             raise ChainOutputError("Chain produced invalid or empty output")
             
-        # Validate final goals output
         ChainOutputValidator.validate_goals_output(
             result,
             input_data["coach_goal"],
