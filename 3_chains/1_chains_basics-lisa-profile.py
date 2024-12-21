@@ -10,6 +10,22 @@ from dataclasses import dataclass
 import yaml
 import os
 from pathlib import Path
+import logging
+from datetime import datetime
+
+# Debug Configuration
+DEBUG = os.getenv('DEBUG', 'false').lower() == 'true'
+
+# Configure logging
+logging.basicConfig(
+    level=logging.DEBUG if DEBUG else logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler(f'chain_debug_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log') if DEBUG else logging.NullHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 # Custom Exceptions
 class ProfileValidationError(Exception):
@@ -113,10 +129,11 @@ def load_templates(template_path: str = "templates.yaml") -> Tuple[ChatPromptTem
         raise TemplateLoadError(f"Failed to load templates: {str(e)}")
 
 class ChainProgressCallbackHandler(BaseCallbackHandler):
-    def __init__(self, debug_mode: bool = False):
-        """Initialize the handler with optional debug mode"""
+    def __init__(self, debug_mode: bool = DEBUG):
+        """Initialize the handler with debug mode defaulting to global DEBUG setting"""
         self.debug_mode = debug_mode
         self._sensitive_keys = {'api_key', 'secret', 'password', 'token', 'authorization'}
+        self.logger = logging.getLogger(__name__)
 
     def _sanitize_dict(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Remove or mask sensitive information from dictionaries"""
@@ -137,45 +154,83 @@ class ChainProgressCallbackHandler(BaseCallbackHandler):
         return sanitized
 
     def on_chain_start(self, serialized: dict, inputs: dict, **kwargs):
-        print(f"\n🔄 Starting Chain: {serialized.get('name', 'Unnamed Chain')}")
-        if inputs and self.debug_mode:
+        chain_name = serialized.get('name', 'Unnamed Chain')
+        print(f"\n🔄 Starting Chain: {chain_name}")
+        
+        if self.debug_mode:
             sanitized_inputs = self._sanitize_dict(inputs)
-            print(f"Debug - Chain Inputs: {sanitized_inputs}")
+            self.logger.debug(f"Chain '{chain_name}' starting with inputs:")
+            self.logger.debug(f"Serialized config: {serialized}")
+            self.logger.debug(f"Sanitized inputs: {sanitized_inputs}")
     
     def on_chain_end(self, outputs: dict, **kwargs):
         print(f"✅ Chain completed")
         if self.debug_mode and outputs:
             sanitized_outputs = self._sanitize_dict(outputs)
-            print(f"Debug - Chain Outputs: {sanitized_outputs}")
+            self.logger.debug("Chain outputs:")
+            self.logger.debug(f"Sanitized outputs: {sanitized_outputs}")
         
     def on_llm_start(self, serialized: dict, prompts: List[str], **kwargs):
         print("\n🤔 LLM is thinking...")
         if self.debug_mode:
-            print(f"Debug - Prompt count: {len(prompts)}")
+            self.logger.debug(f"LLM Start - Model: {serialized.get('name', 'Unknown')}")
+            self.logger.debug(f"Number of prompts: {len(prompts)}")
+            for idx, prompt in enumerate(prompts, 1):
+                self.logger.debug(f"\nPrompt {idx}:")
+                self.logger.debug("-" * 50)
+                self.logger.debug(prompt)
+                self.logger.debug("-" * 50)
     
     def on_llm_end(self, response, **kwargs):
         print("✨ LLM completed response")
         if self.debug_mode and hasattr(response, 'generations'):
+            self.logger.debug("\nLLM Response Details:")
             for gen_idx, generation in enumerate(response.generations):
                 for output_idx, output in enumerate(generation):
-                    print(f"Debug - Generation {gen_idx+1}, Output {output_idx+1}:")
-                    print(f"Content: {output.text}")
+                    self.logger.debug(f"\nGeneration {gen_idx+1}, Output {output_idx+1}:")
+                    self.logger.debug("-" * 50)
+                    self.logger.debug(f"Content: {output.text}")
                     if hasattr(output, 'generation_info'):
                         sanitized_info = self._sanitize_dict(output.generation_info)
-                        print(f"Generation Info: {sanitized_info}")
+                        self.logger.debug(f"Generation Info: {sanitized_info}")
+                    self.logger.debug("-" * 50)
     
     def on_llm_error(self, error: Exception, **kwargs):
-        print(f"❌ LLM Error: {str(error)}")
+        error_msg = f"❌ LLM Error: {str(error)}"
+        print(error_msg)
+        if self.debug_mode:
+            self.logger.error(error_msg, exc_info=True)
+            
+    def on_chain_error(self, error: Exception, **kwargs):
+        error_msg = f"❌ Chain Error: {str(error)}"
+        print(error_msg)
+        if self.debug_mode:
+            self.logger.error(error_msg, exc_info=True)
+
+    def on_tool_start(self, serialized: dict, input_str: str, **kwargs):
+        if self.debug_mode:
+            self.logger.debug(f"Tool Start - {serialized.get('name', 'Unknown Tool')}")
+            self.logger.debug(f"Input: {input_str}")
+
+    def on_tool_end(self, output: str, **kwargs):
+        if self.debug_mode:
+            self.logger.debug(f"Tool Output: {output}")
+
+    def on_tool_error(self, error: Exception, **kwargs):
+        error_msg = f"❌ Tool Error: {str(error)}"
+        print(error_msg)
+        if self.debug_mode:
+            self.logger.error(error_msg, exc_info=True)
 
 # Load environment variables from .env
 load_dotenv()
 
 # Create handlers and model
-progress_handler = ChainProgressCallbackHandler(debug_mode=True)
+progress_handler = ChainProgressCallbackHandler()  # Will use global DEBUG setting
 stream_handler = StreamingStdOutCallbackHandler()
 model = ChatOpenAI(
     model="gpt-4", 
-    callbacks=[stream_handler],
+    callbacks=[progress_handler, stream_handler],
     streaming=True
 )
 
