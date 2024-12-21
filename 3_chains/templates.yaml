@@ -1,0 +1,36 @@
+profile_template:
+  system: Create comprehensive learner profiles for technical professionals.
+  human: |
+    Profile analysis for:
+    Background: {background}
+    Role: {current_role}
+    Tech Experience: {experience_level}
+
+    Analyze:
+    1. Jobs to be Done
+    2. Challenges
+    3. Career Path
+    4. Work Environment
+    5. Skill Gaps
+
+goals_template:
+  system: Transform professional needs into actionable learning goals.
+  human: |
+    Given profile:
+    {learner_profile}
+
+    Organization needs:
+    {coach_goal}
+    {coach_outcomes}
+
+    Create goals that:
+    1. Address JTBD
+    2. Resolve challenges
+    3. Close skill gaps
+    4. Support career growth
+    5. Meet org objectives
+
+    Per goal, show:
+    - JTBD alignment
+    - Challenge resolution
+    - Org goal fit 

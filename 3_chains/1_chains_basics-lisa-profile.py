@@ -5,8 +5,11 @@ from langchain_openai import ChatOpenAI
 from langchain.schema.runnable import RunnablePassthrough, RunnableMap
 from langchain.callbacks.base import BaseCallbackHandler
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List, Tuple
 from dataclasses import dataclass
+import yaml
+import os
+from pathlib import Path
 
 # Custom Exceptions
 class ProfileValidationError(Exception):
@@ -15,6 +18,10 @@ class ProfileValidationError(Exception):
 
 class ChainOutputError(Exception):
     """Raised when chain output is invalid or empty"""
+    pass
+
+class TemplateLoadError(Exception):
+    """Raised when template loading fails"""
     pass
 
 @dataclass
@@ -53,6 +60,58 @@ class ProfileInput:
             coach_outcomes=data['coach_outcomes']
         )
 
+def load_templates(template_path: str = "templates.yaml") -> Tuple[ChatPromptTemplate, ChatPromptTemplate]:
+    """
+    Load templates from YAML file.
+    
+    Args:
+        template_path: Path to the YAML template file
+        
+    Returns:
+        Tuple of (profile_template, goals_template)
+        
+    Raises:
+        TemplateLoadError: If template file is missing or malformed
+    """
+    try:
+        # Resolve template path relative to the script location
+        script_dir = Path(__file__).parent
+        full_path = script_dir / template_path
+        
+        if not full_path.exists():
+            raise FileNotFoundError(f"Template file not found: {full_path}")
+            
+        with open(full_path, 'r') as file:
+            templates = yaml.safe_load(file)
+            
+        # Validate template structure
+        required_templates = ['profile_template', 'goals_template']
+        for template_name in required_templates:
+            if template_name not in templates:
+                raise TemplateLoadError(f"Missing template: {template_name}")
+            if not isinstance(templates[template_name], dict):
+                raise TemplateLoadError(f"Invalid template structure for: {template_name}")
+            if 'system' not in templates[template_name] or 'human' not in templates[template_name]:
+                raise TemplateLoadError(f"Missing system or human message in: {template_name}")
+                
+        # Create ChatPromptTemplates
+        profile_template = ChatPromptTemplate.from_messages([
+            ("system", templates['profile_template']['system']),
+            ("human", templates['profile_template']['human'])
+        ])
+        
+        goals_template = ChatPromptTemplate.from_messages([
+            ("system", templates['goals_template']['system']),
+            ("human", templates['goals_template']['human'])
+        ])
+        
+        return profile_template, goals_template
+        
+    except yaml.YAMLError as e:
+        raise TemplateLoadError(f"Failed to parse YAML template file: {str(e)}")
+    except Exception as e:
+        raise TemplateLoadError(f"Failed to load templates: {str(e)}")
+
 class ChainProgressCallbackHandler(BaseCallbackHandler):
     def on_chain_start(self, serialized: dict, inputs: dict, **kwargs):
         print(f"\n🔄 Starting Chain: {serialized.get('name', 'Unnamed Chain')}")
@@ -80,46 +139,12 @@ model = ChatOpenAI(
     streaming=True
 )
 
-# First Template: Create Learner Profile
-profile_template = ChatPromptTemplate.from_messages([
-    ("system", """Create comprehensive learner profiles for technical professionals."""),
-    
-    ("human", """Profile analysis for:
-Background: {background}
-Role: {current_role}
-Tech Experience: {experience_level}
-
-Analyze:
-1. Jobs to be Done
-2. Challenges
-3. Career Path
-4. Work Environment
-5. Skill Gaps""")
-])
-
-# Second Template: Derive Learning Goals
-goals_template = ChatPromptTemplate.from_messages([
-    ("system", """Transform professional needs into actionable learning goals."""),
-    
-    ("human", """Given profile:
-{learner_profile}
-
-Organization needs:
-{coach_goal}
-{coach_outcomes}
-
-Create goals that:
-1. Address JTBD
-2. Resolve challenges
-3. Close skill gaps
-4. Support career growth
-5. Meet org objectives
-
-Per goal, show:
-- JTBD alignment
-- Challenge resolution
-- Org goal fit""")
-])
+# Load templates
+try:
+    profile_template, goals_template = load_templates()
+except TemplateLoadError as e:
+    print(f"Failed to load templates: {str(e)}")
+    raise
 
 # Create the LCEL chain
 profile_chain = profile_template | model | StrOutputParser()
