@@ -1,152 +1,143 @@
-# LangChain Crash Course
+# **Instructional Design Workflow with AI Templates**
 
-Welcome to the LangChain Crash Course repository! This repo contains all the code examples you'll need to follow along with the LangChain Master Class for Beginners video. By the end of this course, you'll know how to use LangChain to create your own AI agents, build RAG chatbots, and automate tasks with AI.
+This project provides a streamlined workflow for creating, managing, and enhancing instructional design processes using AI-powered templates. The system leverages tools like LangChain, dynamic templates, and a database backend (e.g., Firebase or Supabase) to design, deliver, and iterate on learning programs efficiently.
 
-## Course Outline
+---
 
-1. **Setup Environment**
-2. **Chat Models**
-3. **Prompt Templates**
-4. **Chains**
-5. **RAG (Retrieval-Augmented Generation)**
-6. **Agents & Tools**
+## **Features**
 
-## Getting Started
+- **AI-Powered Templates**: Automates key instructional design tasks, such as creating JTBD analyses, learner profiles, course objectives, and more.
+- **Version Control**: Tracks and manages multiple versions of template outputs for iterative design and auditing.
+- **Database Integration**: Stores outputs for modules, learner profiles, and program transformations for reuse across workflows.
+- **Engagement Enhancements**:
+  - Suggests polls, memes, comics, and pop culture references to improve learner engagement.
+  - Recommends opportunities for personalization using AI or manual methods.
+- **Output Customization**:
+  - Generates slide decks, case studies, and learning assessments tailored to the course objectives.
+  - Incorporates visual elements like DALL-E-generated images for enhanced learning materials.
+- **Feedback and Analytics**:
+  - Collects learner feedback and performance data to refine programs iteratively.
+  - Defines success metrics for courses and modules.
+
+---
+
+## **Getting Started**
 
 ### Prerequisites
 
-- Python 3.10 or 3.11
-- Poetry (Follow this [Poetry installation tutorial](https://python-poetry.org/docs/#installation) to install Poetry on your system)
+1. **Python Environment**:
+   - Python 3.8 or later.
+   - Install required libraries:
+     ```bash
+     pip install langchain firebase-admin supabase-client openai
+     ```
 
-### Installation
+2. **Database**:
+   - Firebase Firestore or Supabase (PostgreSQL-based).
+   - Set up a database schema to store template outputs and version control.
 
-1. Clone the repository:
+3. **AI API Key**:
+   - OpenAI API key for generating template outputs.
 
-   ```bash
-   <!-- TODO: UPDATE TO MY  -->
-   git clone https://github.com/bhancockio/langchain-crash-course
-   cd langchain-crash-course
-   ```
+4. **Optional**:
+   - Access to DALL-E for generating visuals.
+   - A Zoom account for implementing polls in live sessions.
 
-2. Install dependencies using Poetry:
+---
 
-   ```bash
-   poetry install --no-root
-   ```
+## **Folder Structure**
 
-3. Set up your environment variables:
+project/
+├── templates/                  # AI templates for each task
+│   ├── jtbd_template.yaml      # Jobs To Be Done template
+│   ├── learner_profile.yaml    # Learner profile creation
+│   ├── course_objectives.yaml  # SMART course objectives
+│   ├── engagement.yaml         # Polls, memes, and pop culture suggestions
+│   ├── assessments.yaml        # Assessment and feedback generation
+│   └── transformation.yaml     # Learner transformation analysis
+├── db/                         # Database integration scripts
+│   ├── firebase_client.py      # Firebase database management
+│   ├── supabase_client.py      # Supabase database management
+│   └── versioning.py           # Version control logic
+├── outputs/                    # Example outputs for templates
+├── README.md                   # Project documentation
+└── main.py                     # Main execution file
 
-   - Rename the `.env.example` file to `.env` and update the variables inside with your own values. Example:
+---
 
-   ```bash
-   mv .env.example .env
-   ```
+## **Usage**
 
-4. Activate the Poetry shell to run the examples:
+### 1. **Generate Template Outputs**
+Run individual templates by invoking them with relevant inputs. For example:
 
-   ```bash
-   poetry shell
-   ```
+```python
+from templates.jtbd_template import jtbd_template
+from langchain.schema.runnable import RunnableMap
 
-5. Run the code examples:
+# Define inputs
+inputs = {
+    "course_title": "Mastering Microservices Architecture",
+    "target_audience": "Mid-level software developers and technical leads",
+    "learning_objectives": [
+        "Understand the fundamentals of microservices",
+        "Design scalable, modular systems",
+        "Implement API gateways and scalable solutions"
+    ],
+    "delivery_format": "Self-paced with live Q&A"
+}
 
-   ```bash
-    python 1_chat_models/1_chat_model_basic.py
-   ```
+# Invoke template
+output = jtbd_template.invoke(inputs)
+print(output)
 
-## Repository Structure
+2. Store Outputs in the Database
 
-Here's a breakdown of the folders and what you'll find in each:
+Save outputs for reuse and version tracking:
 
-### 1. Chat Models
+from db.versioning import store_template_output_with_version
 
-- `1_chat_model_basic.py`
-- `2_chat_model_basic_conversation.py`
-- `3_chat_model_alternatives.py`
-- `4_chat_model_conversation_with_user.py`
-- `5_chat_model_save_message_history_firestore.py`
+store_template_output_with_version(
+    course_id="1234-5678",
+    course_title="Mastering Microservices Architecture",
+    template_name="jtbd_template",
+    output_data=output
+)
 
-Learn how to interact with models like ChatGPT, Claude, and Gemini.
+3. Retrieve Outputs for Reuse
 
-### 2. Prompt Templates
+Fetch stored outputs dynamically for future templates or workflows:
 
-- `1_prompt_template_basic.py`
-- `2_prompt_template_with_chat_model.py`
+from db.versioning import get_current_template_output
 
-Understand the basics of prompt templates and how to use them effectively.
+output = get_current_template_output(course_id="1234-5678", template_name="jtbd_template")
+print(output)
 
-### 3. Chains
+4. Generate Slide Decks and Visuals
 
-- `1_chains_basics.py`
-- `2_chains_under_the_hood.py`
-- `3_chains_extended.py`
-- `4_chains_parallel.py`
-- `5_chains_branching.py`
+Generate slides and add visuals using integrated AI tools:
 
-Learn how to create chains using Chat Models and Prompts to automate tasks.
+from templates.transformation import transformation_template
+from dalle_client import generate_image
 
-### 4. RAG (Retrieval-Augmented Generation)
+# Generate a DALL-E image
+prompt = "A high-tech server room with glowing API gateway icons connected to client devices."
+image_url = generate_image(prompt)
 
-- `1a_rag_basics.py`
-- `1b_rag_basics.py`
-- `2a_rag_basics_metadata.py`
-- `2b_rag_basics_metadata.py`
-- `3_rag_text_splitting_deep_dive.py`
-- `4_rag_embedding_deep_dive.py`
-- `5_rag_retriever_deep_dive.py`
-- `6_rag_one_off_question.py`
-- `7_rag_conversational.py`
-- `8_rag_web_scrape_firecrawl.py`
-- `8_rag_web_scrape.py`
+# Use image in slide creation
+print(f"Generated image URL: {image_url}")
 
-Explore the technologies like documents, embeddings, and vector stores that enable RAG queries.
+5. Polls and Engagement
 
-### 5. Agents & Tools
+Embed polls, memes, and comics into the course for better learner engagement:
 
-- `1_agent_and_tools_basics.py`
-- `agent_deep_dive/`
-  - `1_agent_react_chat.py`
-  - `2_react_docstore.py`
-- `tools_deep_dive/`
-  - `1_tool_constructor.py`
-  - `2_tool_decorator.py`
-  - `3_tool_base_tool.py`
+from templates.engagement import engagement_template
 
-Learn about agents, how they work, and how to build custom tools to enhance their capabilities.
-
-## How to Use This Repository
-
-1. **Watch the Video:** Start by watching the LangChain Master Class for Beginners video on YouTube at 2X speed for a high-level overview.
-
-2. **Run the Code Examples:** Follow along with the code examples provided in this repository. Each section in the video corresponds to a folder in this repo.
-
-3. **Join the Community:** If you get stuck or want to connect with other AI developers, join the FREE Skool community [here](https://www.skool.com/ai-developer-accelerator/about).
-
-## Comprehensive Documentation
-
-Each script in this repository contains detailed comments explaining the purpose and functionality of the code. This will help you understand the flow and logic behind each example.
-
-## FAQ
-
-**Q: What is LangChain?**  
-A: LangChain is a framework designed to simplify the process of building applications that utilize language models.
-
-**Q: How do I set up my environment?**  
-A: Follow the instructions in the "Getting Started" section above. Ensure you have Python 3.10 or 3.11 installed, install Poetry, clone the repository, install dependencies, rename the `.env.example` file to `.env`, and activate the Poetry shell.
-
-**Q: I am getting an error when running the examples. What should I do?**  
-A: Ensure all dependencies are installed correctly and your environment variables are set up properly. If the issue persists, seek help in the Skool community or open an issue on GitHub.
-
-**Q: Can I contribute to this repository?**  
-A: Yes! Contributions are welcome. Please open an issue or submit a pull request with your changes.
-
-**Q: Where can I find more information about LangChain?**  
-A: Check out the official LangChain documentation and join the Skool community for additional resources and support.
-
-## Support
-
-If you encounter any issues or have questions, feel free to open an issue on GitHub or ask for help in the Skool community.
-
-## License
-
-This project is licensed under the MIT License.
+inputs = {
+    "course_title": "Mastering Microservices Architecture",
+    "modules": [
+        {"title": "Introduction to Microservices", "focus": "Key concepts and benefits"},
+        {"title": "Designing Scalable Systems", "focus": "Best practices for scalability"},
+    ]
+}
+output = engagement_template.invoke(inputs)
+print(output)
