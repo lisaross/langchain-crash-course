@@ -113,25 +113,65 @@ def load_templates(template_path: str = "templates.yaml") -> Tuple[ChatPromptTem
         raise TemplateLoadError(f"Failed to load templates: {str(e)}")
 
 class ChainProgressCallbackHandler(BaseCallbackHandler):
+    def __init__(self, debug_mode: bool = False):
+        """Initialize the handler with optional debug mode"""
+        self.debug_mode = debug_mode
+        self._sensitive_keys = {'api_key', 'secret', 'password', 'token', 'authorization'}
+
+    def _sanitize_dict(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Remove or mask sensitive information from dictionaries"""
+        if not isinstance(data, dict):
+            return data
+            
+        sanitized = {}
+        for key, value in data.items():
+            # Check if the key contains any sensitive terms
+            if any(sensitive in key.lower() for sensitive in self._sensitive_keys):
+                sanitized[key] = "[REDACTED]"
+            elif isinstance(value, dict):
+                sanitized[key] = self._sanitize_dict(value)
+            elif isinstance(value, list):
+                sanitized[key] = [self._sanitize_dict(item) if isinstance(item, dict) else item for item in value]
+            else:
+                sanitized[key] = value
+        return sanitized
+
     def on_chain_start(self, serialized: dict, inputs: dict, **kwargs):
         print(f"\n🔄 Starting Chain: {serialized.get('name', 'Unnamed Chain')}")
-        if inputs:
-            print(f"Inputs: {inputs}")
+        if inputs and self.debug_mode:
+            sanitized_inputs = self._sanitize_dict(inputs)
+            print(f"Debug - Chain Inputs: {sanitized_inputs}")
     
     def on_chain_end(self, outputs: dict, **kwargs):
         print(f"✅ Chain completed")
+        if self.debug_mode and outputs:
+            sanitized_outputs = self._sanitize_dict(outputs)
+            print(f"Debug - Chain Outputs: {sanitized_outputs}")
         
-    def on_llm_start(self, *args, **kwargs):
+    def on_llm_start(self, serialized: dict, prompts: List[str], **kwargs):
         print("\n🤔 LLM is thinking...")
+        if self.debug_mode:
+            print(f"Debug - Prompt count: {len(prompts)}")
     
-    def on_llm_end(self, *args, **kwargs):
+    def on_llm_end(self, response, **kwargs):
         print("✨ LLM completed response")
+        if self.debug_mode and hasattr(response, 'generations'):
+            for gen_idx, generation in enumerate(response.generations):
+                for output_idx, output in enumerate(generation):
+                    print(f"Debug - Generation {gen_idx+1}, Output {output_idx+1}:")
+                    print(f"Content: {output.text}")
+                    if hasattr(output, 'generation_info'):
+                        sanitized_info = self._sanitize_dict(output.generation_info)
+                        print(f"Generation Info: {sanitized_info}")
+    
+    def on_llm_error(self, error: Exception, **kwargs):
+        print(f"❌ LLM Error: {str(error)}")
 
 # Load environment variables from .env
 load_dotenv()
 
 # Create handlers and model
-progress_handler = ChainProgressCallbackHandler()
+progress_handler = ChainProgressCallbackHandler(debug_mode=True)
 stream_handler = StreamingStdOutCallbackHandler()
 model = ChatOpenAI(
     model="gpt-4", 
