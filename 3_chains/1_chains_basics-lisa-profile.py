@@ -12,6 +12,8 @@ import os
 from pathlib import Path
 import logging
 from datetime import datetime
+import tiktoken
+from typing import Dict, Any, Optional, List, Union
 
 # Debug Configuration
 DEBUG = os.getenv('DEBUG', 'false').lower() == 'true'
@@ -26,6 +28,110 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
+
+# Model configuration
+GPT4_MAX_TOKENS = 8192  # Maximum context length for GPT-4
+TOKEN_WARNING_THRESHOLD = 0.8  # Warn when token usage reaches 80% of limit
+
+class TokenMonitor:
+    """Monitors token usage for prompts and responses"""
+    
+    def __init__(self, model_name: str = "gpt-4"):
+        self.model_name = model_name
+        self.tokenizer = tiktoken.encoding_for_model(model_name)
+        self.total_prompt_tokens = 0
+        self.total_completion_tokens = 0
+        self.max_tokens = GPT4_MAX_TOKENS if "gpt-4" in model_name else 4096
+    
+    def count_tokens(self, text: Union[str, List[Dict[str, str]]]) -> int:
+        """Count tokens in text or message list"""
+        if isinstance(text, str):
+            return len(self.tokenizer.encode(text))
+        elif isinstance(text, list):
+            total = 0
+            for message in text:
+                if isinstance(message, dict) and "content" in message:
+                    total += len(self.tokenizer.encode(message["content"]))
+            return total
+        return 0
+    
+    def log_usage(self, prompt_tokens: int, completion_tokens: int):
+        """Log token usage statistics"""
+        total_tokens = prompt_tokens + completion_tokens
+        
+        # Calculate cost for this specific usage
+        current_cost = self._calculate_cost(
+            total_tokens,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens
+        )
+        
+        # Always print token usage summary
+        print(f"\n📊 Token Usage Summary:")
+        print(f"  • Prompt Tokens: {prompt_tokens:,}")
+        print(f"  • Completion Tokens: {completion_tokens:,}")
+        print(f"  • Total Tokens: {total_tokens:,}")
+        print(f"  • Cost: ${current_cost:.4f}")
+        
+        # Log detailed information in debug mode
+        logger.info(
+            f"Token Usage - Prompt: {prompt_tokens}, "
+            f"Completion: {completion_tokens}, "
+            f"Total: {total_tokens}, "
+            f"Cost: ${current_cost:.4f}"
+        )
+    
+    def _calculate_cost(self, total_tokens: int, prompt_tokens: Optional[int] = None, completion_tokens: Optional[int] = None) -> float:
+        """
+        Calculate estimated cost based on current OpenAI pricing
+        
+        Args:
+            total_tokens: Total tokens (used for backward compatibility)
+            prompt_tokens: Number of prompt tokens (if provided)
+            completion_tokens: Number of completion tokens (if provided)
+        """
+        # If individual token counts aren't provided, estimate based on total
+        if prompt_tokens is None or completion_tokens is None:
+            # Assume a typical 40/60 split between prompt and completion
+            prompt_tokens = int(total_tokens * 0.4)
+            completion_tokens = total_tokens - prompt_tokens
+        
+        # GPT-4 pricing (as of 2024)
+        if "gpt-4" in self.model_name:
+            prompt_cost = (prompt_tokens / 1000) * 0.03  # $0.03 per 1K tokens
+            completion_cost = (completion_tokens / 1000) * 0.06  # $0.06 per 1K tokens
+        else:
+            # GPT-3.5 pricing
+            prompt_cost = (prompt_tokens / 1000) * 0.0015  # $0.0015 per 1K tokens
+            completion_cost = (completion_tokens / 1000) * 0.002  # $0.002 per 1K tokens
+        return prompt_cost + completion_cost
+    
+    def check_token_limit(self, prompt_tokens: int) -> Tuple[bool, str]:
+        """Check if token usage is approaching limits"""
+        usage_ratio = prompt_tokens / self.max_tokens
+        
+        # Always show current usage
+        print(f"\n📈 Current Token Usage: {prompt_tokens:,} ({usage_ratio:.1%} of limit)")
+        
+        if usage_ratio >= TOKEN_WARNING_THRESHOLD:
+            warning = (
+                f"⚠️ Token usage ({prompt_tokens:,}) is at {usage_ratio:.1%} of the model's "
+                f"context limit ({self.max_tokens:,}). Consider optimizing the prompt."
+            )
+            suggestions = self._get_optimization_suggestions(prompt_tokens)
+            return False, f"{warning}\n{suggestions}"
+        return True, ""
+    
+    def _get_optimization_suggestions(self, current_tokens: int) -> str:
+        suggestions = ["Optimization suggestions:"]
+        if current_tokens > self.max_tokens * 0.5:
+            suggestions.extend([
+                "• Remove redundant context or examples",
+                "• Summarize lengthy descriptions",
+                "• Split the task into smaller chunks",
+                "• Use more concise language"
+            ])
+        return "\n".join(suggestions)
 
 # Custom Exceptions
 class ProfileValidationError(Exception):
@@ -211,6 +317,11 @@ class ChainProgressCallbackHandler(BaseCallbackHandler):
         self.debug_mode = debug_mode
         self._sensitive_keys = {'api_key', 'secret', 'password', 'token', 'authorization'}
         self.logger = logging.getLogger(__name__)
+        self.token_monitor = TokenMonitor()
+        self._current_prompt_tokens = 0  # Track current prompt tokens
+        self._current_completion_tokens = 0  # Track current completion tokens
+        self._is_final_chain = False  # Track if we're in the final chain
+        self._final_chain_complete = False  # Track if final chain is done
 
     def _sanitize_dict(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Remove or mask sensitive information from dictionaries"""
@@ -232,6 +343,8 @@ class ChainProgressCallbackHandler(BaseCallbackHandler):
 
     def on_chain_start(self, serialized: dict, inputs: dict, **kwargs):
         chain_name = serialized.get('name', 'Unnamed Chain')
+        # Check if this is the final chain
+        self._is_final_chain = chain_name == "Learning Goals Generation Chain"
         print(f"\n🔄 Starting Chain: {chain_name}")
         
         if self.debug_mode:
@@ -241,14 +354,58 @@ class ChainProgressCallbackHandler(BaseCallbackHandler):
             self.logger.debug(f"Sanitized inputs: {sanitized_inputs}")
     
     def on_chain_end(self, outputs: dict, **kwargs):
-        print(f"✅ Chain completed")
+        print(f"\n✅ Chain completed")
+        if self._is_final_chain:
+            self._final_chain_complete = True
+            # Print final token usage summary here
+            total_prompt_tokens = self.token_monitor.total_prompt_tokens
+            total_completion_tokens = self.token_monitor.total_completion_tokens
+            total_tokens = total_prompt_tokens + total_completion_tokens
+            total_cost = self.token_monitor._calculate_cost(
+                total_tokens,
+                prompt_tokens=total_prompt_tokens,
+                completion_tokens=total_completion_tokens
+            )
+            
+            print("\n" + "="*50)
+            print("📊 Final Token Usage Summary:")
+            print(f"  • Total Prompt Tokens: {total_prompt_tokens:,}")
+            print(f"  • Total Completion Tokens: {total_completion_tokens:,}")
+            print(f"  • Total Tokens Used: {total_tokens:,}")
+            print(f"  • Total Cost: ${total_cost:.4f}")
+            print(f"  • Average Cost per 1K tokens: ${(total_cost / total_tokens * 1000):.4f}")
+            
+            # Add recommendations if token usage is high
+            if total_tokens > GPT4_MAX_TOKENS * 0.5:  # If using more than 50% of max tokens
+                print("\n💡 Optimization Recommendations:")
+                print("  • Consider breaking down the task into smaller chunks")
+                print("  • Reduce redundant information in prompts")
+                print("  • Use more concise language in prompts")
+                print("  • Cache intermediate results for reuse")
+                if total_cost > 0.10:  # If cost is over $0.10
+                    print("  • Consider using a smaller model for initial drafts")
+                    print("  • Implement token usage budgets per request")
+            print("="*50 + "\n")
+            
         if self.debug_mode and outputs:
             sanitized_outputs = self._sanitize_dict(outputs)
             self.logger.debug("Chain outputs:")
             self.logger.debug(f"Sanitized outputs: {sanitized_outputs}")
-        
+    
     def on_llm_start(self, serialized: dict, prompts: List[str], **kwargs):
         print("\n🤔 LLM is thinking...")
+        
+        # Token counting for prompts (always show)
+        self._current_prompt_tokens = 0
+        for idx, prompt in enumerate(prompts, 1):
+            prompt_tokens = self.token_monitor.count_tokens(prompt)
+            self._current_prompt_tokens += prompt_tokens
+            
+            # Check token limits and show current usage
+            is_safe, warning = self.token_monitor.check_token_limit(prompt_tokens)
+            if not is_safe:
+                print(warning)
+            
         if self.debug_mode:
             self.logger.debug(f"LLM Start - Model: {serialized.get('name', 'Unknown')}")
             self.logger.debug(f"Number of prompts: {len(prompts)}")
@@ -259,7 +416,32 @@ class ChainProgressCallbackHandler(BaseCallbackHandler):
                 self.logger.debug("-" * 50)
     
     def on_llm_end(self, response, **kwargs):
-        print("✨ LLM completed response")
+        print("\n✨ LLM completed response")
+        
+        # Get completion tokens from response if available
+        completion_tokens = 0
+        if hasattr(response, 'llm_output') and response.llm_output:
+            token_usage = response.llm_output.get('token_usage', {})
+            completion_tokens = token_usage.get('completion_tokens', 0)
+            prompt_tokens = token_usage.get('prompt_tokens', self._current_prompt_tokens)
+        else:
+            # If not available in response, use our tracked values
+            completion_tokens = self._current_completion_tokens
+            prompt_tokens = self._current_prompt_tokens
+        
+        # Always add to totals
+        self.token_monitor.total_prompt_tokens += prompt_tokens
+        self.token_monitor.total_completion_tokens += completion_tokens
+        
+        # Show token usage summary only if not in final chain
+        if not self._is_final_chain:
+            self.token_monitor.log_usage(prompt_tokens, completion_tokens)
+        
+        # Reset counters
+        self._current_completion_tokens = 0
+        self._current_prompt_tokens = 0
+        
+        # Debug mode additional information
         if self.debug_mode and hasattr(response, 'generations'):
             self.logger.debug("\nLLM Response Details:")
             for gen_idx, generation in enumerate(response.generations):
@@ -272,14 +454,20 @@ class ChainProgressCallbackHandler(BaseCallbackHandler):
                         self.logger.debug(f"Generation Info: {sanitized_info}")
                     self.logger.debug("-" * 50)
     
-    def on_llm_error(self, error: Exception, **kwargs):
-        error_msg = f"❌ LLM Error: {str(error)}"
+    def on_llm_new_token(self, token: str, **kwargs):
+        """Track tokens in streaming responses"""
+        if token:
+            token_count = self.token_monitor.count_tokens(token)
+            self._current_completion_tokens += token_count
+
+    def on_chain_error(self, error: Exception, **kwargs):
+        error_msg = f"❌ Chain Error: {str(error)}"
         print(error_msg)
         if self.debug_mode:
             self.logger.error(error_msg, exc_info=True)
             
-    def on_chain_error(self, error: Exception, **kwargs):
-        error_msg = f"❌ Chain Error: {str(error)}"
+    def on_llm_error(self, error: Exception, **kwargs):
+        error_msg = f"❌ LLM Error: {str(error)}"
         print(error_msg)
         if self.debug_mode:
             self.logger.error(error_msg, exc_info=True)
@@ -426,8 +614,7 @@ def process_profile(input_data: Dict[str, Any]) -> str:
             input_data["coach_goal"],
             input_data["coach_outcomes"]
         )
-            
-        print("\n📝 Final Result:\n")
+        
         return result
         
     except ProfileValidationError as e:
@@ -451,7 +638,6 @@ if __name__ == "__main__":
     }
 
     try:
-        result = process_profile(example_input)
-        print(result)
+        process_profile(example_input)
     except Exception as e:
         print(f"\n❌ Failed to process profile: {str(e)}")
